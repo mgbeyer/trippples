@@ -18,7 +18,11 @@ body {
 
 main {
     width: min(92vw, 760px);
+    min-height: 100vh;
     padding: 1rem;
+
+    display: flex;
+    flex-direction: column;
 }
 
 h1 {
@@ -27,10 +31,20 @@ h1 {
     font-weight: 600;
 }
 
+#boardArea {
+    flex: 1;
+    min-height: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 canvas {
     display: block;
     width: 100%;
-    aspect-ratio: 1;
+    height: 100%;
+
     border: 1px solid #777;
     background: #ddd;
     touch-action: none;

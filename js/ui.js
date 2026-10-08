@@ -3,12 +3,15 @@ const UI_CONFIG = {
 };
 
 class UI {
-    constructor(canvas, game) {
+    constructor(canvas, boardArea, game) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
+        this.boardArea = boardArea;
         this.game = game;
 
         this.drag = null;
+        this.boardLeft = 0;
+        this.boardTop = 0;
 
         canvas.addEventListener("pointerdown", e => this.down(e));
         canvas.addEventListener("pointermove", e => this.move(e));
@@ -21,12 +24,13 @@ class UI {
     }
 
     resize() {
-        const main = this.canvas.parentElement;
-        const r = main.getBoundingClientRect();
+        const r = this.boardArea.getBoundingClientRect();
         const d = devicePixelRatio || 1;
 
         const availableWidth = r.width;
-        const availableHeight = window.innerHeight - r.top - 32;
+        const availableHeight = r.height;
+        this.width = availableWidth;
+        this.height = availableHeight;
 
         this.cellSize = Math.min(
             UI_CONFIG.maxCellSize,
@@ -36,11 +40,14 @@ class UI {
 
         this.size = this.cellSize * BOARD_SIZE;
 
-        this.canvas.style.width = `${this.size}px`;
-        this.canvas.style.height = `${this.size}px`;
+        this.boardLeft = (availableWidth - this.size) / 2;
+        this.boardTop = (availableHeight - this.size) / 2;
 
-        this.canvas.width = Math.round(this.size * d);
-        this.canvas.height = Math.round(this.size * d);
+        this.canvas.width = Math.round(availableWidth * d);
+        this.canvas.height = Math.round(availableHeight * d);
+
+        this.canvas.style.width = `${availableWidth}px`;
+        this.canvas.style.height = `${availableHeight}px`;
 
         this.ctx.setTransform(d, 0, 0, d, 0, 0);
 
@@ -49,16 +56,21 @@ class UI {
 
     cell(x, y) {
         return {
-            x: (x + 0.5) * this.cellSize,
-            y: (y + 0.5) * this.cellSize
+            x: this.boardLeft + (x + 0.5) * this.cellSize,
+            y: this.boardTop + (y + 0.5) * this.cellSize
         };
     }
 
     point(X, Y) {
         const r = this.canvas.getBoundingClientRect();
 
-        const x = Math.floor((X - r.left) / this.cellSize);
-        const y = Math.floor((Y - r.top) / this.cellSize);
+        const x = Math.floor(
+            (X - r.left - this.boardLeft) / this.cellSize
+        );
+
+        const y = Math.floor(
+            (Y - r.top - this.boardTop) / this.cellSize
+        );
 
         return isInsideBoard(x, y)
             ? { x, y }
@@ -71,7 +83,8 @@ class UI {
         }
 
         const p = this.point(e.clientX, e.clientY);
-        const me = this.game.players[this.game.currentPlayer];
+        const currentPlayer = this.game.getCurrentPlayer();
+        const me = this.game.getPlayerPosition(currentPlayer);
 
         if (!p || me.x !== p.x || me.y !== p.y) {
             return;
@@ -80,7 +93,7 @@ class UI {
         this.canvas.setPointerCapture(e.pointerId);
 
         this.drag = {
-            player: this.game.currentPlayer,
+            player: currentPlayer,
             from: { ...p },
             X: e.clientX,
             Y: e.clientY
@@ -119,20 +132,30 @@ class UI {
 
     render() {
         const c = this.ctx;
-        const s = this.size;
         const k = this.cellSize;
+        const board = this.game.getBoard();
 
-        c.clearRect(0, 0, s, s);
+        c.clearRect(
+            0,
+            0,
+            this.width,
+            this.height
+        );
 
         for (let y = 0; y < 8; y++) {
             for (let x = 0; x < 8; x++) {
-                const t = this.game.board[y][x];
+                const t = board[y][x];
 
                 c.fillStyle = (x + y) % 2
                     ? "#c9c9c9"
                     : "#d7d7d7";
 
-                c.fillRect(x * k, y * k, k, k);
+                c.fillRect(
+                    this.boardLeft + x * k,
+                    this.boardTop + y * k,
+                    k,
+                    k
+                );
 
                 if (t.type === "parcours") {
                     this.goal(x, y);
@@ -143,8 +166,8 @@ class UI {
                     c.lineWidth = 2;
 
                     c.strokeRect(
-                        x * k + 0.18 * k,
-                        y * k + 0.18 * k,
+                        this.boardLeft + x * k + 0.18 * k,
+                        this.boardTop + y * k + 0.18 * k,
                         0.64 * k,
                         0.64 * k
                     );
@@ -161,22 +184,37 @@ class UI {
 
         for (let i = 0; i <= 8; i++) {
             c.beginPath();
-            c.moveTo(i * k, 0);
-            c.lineTo(i * k, s);
+            c.moveTo(
+                this.boardLeft + i * k,
+                this.boardTop
+            );
+            c.lineTo(
+                this.boardLeft + i * k,
+                this.boardTop + this.size
+            );
             c.stroke();
 
             c.beginPath();
-            c.moveTo(0, i * k);
-            c.lineTo(s, i * k);
+            c.moveTo(
+                this.boardLeft,
+                this.boardTop + i * k
+            );
+            c.lineTo(
+                this.boardLeft + this.size,
+                this.boardTop + i * k
+            );
             c.stroke();
         }
 
         for (const p of ["orange", "blue"]) {
             if (!(this.drag && this.drag.player === p)) {
-                this.piece(this.game.players[p], p);
+                this.piece(
+                    this.game.getPlayerPosition(p),
+                    p
+                );
             }
         }
-
+        
         if (this.drag) {
             const r = this.canvas.getBoundingClientRect();
 

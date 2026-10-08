@@ -65,6 +65,31 @@ class Game {
         };
     }
 
+    getBoard() {
+        return this.board;
+    }
+
+
+    getCurrentPlayer() {
+        return this.currentPlayer;
+    }
+
+
+    getPlayerPosition(player) {
+        const p = this.players[player];
+
+        return {
+            x: p.x,
+            y: p.y
+        };
+    }
+
+
+    getPlayerState(player) {
+        return {
+            ...this.players[player]
+        };
+    }
 
     getCurrentGoal(player) {
         return GOALS[player][this.players[player].reached];
