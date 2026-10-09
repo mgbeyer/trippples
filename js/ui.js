@@ -3,13 +3,14 @@ const UI_CONFIG = {
 };
 
 class UI {
-    constructor(canvas, boardArea, status, game) {
+    constructor(canvas, boardArea, status, game, newGameButton, undoButton) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.boardArea = boardArea;
         this.status = status;
         this.game = game;
         this.newGameButton = newGameButton;
+        this.undoButton = undoButton;
 
         this.drag = null;
         this.boardLeft = 0;
@@ -26,6 +27,14 @@ class UI {
             this.drag = null;
             this.game.newGame();
             this.render();
+        });
+
+        this.undoButton.addEventListener("click", () => {
+            this.drag = null;
+
+            if (this.game.undo()) {
+                this.render();
+            }
         });
 
         this.resize();
@@ -236,6 +245,8 @@ class UI {
         }
 
         this.updateStatus();
+
+        this.undoButton.disabled = this.game.history.length === 0;
     }
 
     drawCurrentGoal() {
