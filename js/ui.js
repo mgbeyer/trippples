@@ -341,6 +341,24 @@ class UI {
     }
     
     renderMiniMaps() {
+        const currentPlayer = this.game.gameOver
+            ? null
+            : this.game.getCurrentPlayer();
+
+        for (const player of ["blue", "orange"]) {
+            const card = this.miniMaps[player].closest(".playerInfo");
+
+            card.classList.toggle(
+                "active-blue",
+                currentPlayer === "blue" && player === "blue"
+            );
+
+            card.classList.toggle(
+                "active-orange",
+                currentPlayer === "orange" && player === "orange"
+            );
+        }
+
         this.renderMiniMap("blue");
         this.renderMiniMap("orange");
     }

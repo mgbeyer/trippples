@@ -63,6 +63,18 @@ h1 {
     padding: 0.5rem;
     border: 1px solid #555;
     border-radius: 6px;
+    background: #292a2e;
+    transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.playerInfo.active-blue {
+    background: rgba(65, 105, 161, 0.18);
+    border-color: rgba(65, 105, 161, 0.75);
+}
+
+.playerInfo.active-orange {
+    background: rgba(217, 121, 37, 0.18);
+    border-color: rgba(217, 121, 37, 0.75);
 }
 
 .playerInfo h2 {
@@ -119,6 +131,9 @@ canvas {
     padding: 0.75rem 0;
     text-align: center;
     font-weight: 600;
+    background: #2b2c30;
+    border: 1px solid #3b3c40;
+    border-radius: 6px;
 }
 
 
@@ -126,6 +141,10 @@ canvas {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1rem;
+    padding: 0.65rem;
+    background: #2b2c30;
+    border: 1px solid #3b3c40;
+    border-radius: 6px;
 }
 
 #gameMenu button {
