@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Trippples Tests</title>
+
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 2rem;
+            background: #202124;
+            color: #eee;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        th,
+        td {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #555;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #303134;
+        }
+
+        .ok {
+            color: #7fd17f;
+            font-weight: 600;
+        }
+
+        .fail {
+            color: #ff7777;
+            font-weight: 600;
+        }
+
+        #testSummary {
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Trippples Tests</h1>
+
+    <div id="testSummary"></div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Result</th>
+                <th>Test</th>
+                <th>Description</th>
+                <th>Expected</th>
+                <th>Actual</th>
+            </tr>
+        </thead>
+
+        <tbody id="testResults"></tbody>
+    </table>
+
+    <script src="../js/board.js"></script>
+    <script src="../js/rules.js"></script>
+    <script src="../js/game.js"></script>
+
+    <script src="rules.test.js"></script>
+    <script src="game.test.js"></script>
+
+    <script>
+        function valuesEqual(expected, actual) {
+            if (
+                Array.isArray(expected) &&
+                Array.isArray(actual)
+            ) {
+                const normalize = values =>
+                    values
+                        .map(value => `${value.x},${value.y}`)
+                        .sort();
+
+                return JSON.stringify(normalize(expected)) ===
+                    JSON.stringify(normalize(actual));
+            }
+
+            return JSON.stringify(expected) ===
+                JSON.stringify(actual);
+        }
+
+
+        function formatValue(value) {
+            if (Array.isArray(value)) {
+                return value
+                    .map(item =>
+                        typeof item === "object"
+                            ? `(${item.x},${item.y})`
+                            : String(item)
+                    )
+                    .join(", ");
+            }
+
+            if (
+                value !== null &&
+                typeof value === "object"
+            ) {
+                return Object.entries(value)
+                    .map(
+                        ([key, value]) =>
+                            `<strong>${key}</strong>: ${formatValue(value)}`
+                    )
+                    .join("<br>");
+            }
+
+            return String(value);
+        }
+
+
+        function runTests() {
+            const results = [];
+
+            for (const test of TESTS) {
+                try {
+                    const result = test.test();
+
+                    results.push({
+                        ...test,
+                        ...result,
+                        ok: valuesEqual(
+                            result.expected,
+                            result.actual
+                        )
+                    });
+                } catch (error) {
+                    results.push({
+                        ...test,
+                        expected: "Test execution",
+                        actual: error.message,
+                        ok: false
+                    });
+                }
+            }
+
+            const table =
+                document.getElementById("testResults");
+
+            let currentSuite = null;
+
+            for (const result of results) {
+
+                if (result.suite !== currentSuite) {
+                    currentSuite = result.suite;
+
+                    const suiteRow =
+                        document.createElement("tr");
+
+                    suiteRow.innerHTML = `
+                        <th colspan="5">
+                            ${currentSuite}
+                        </th>
+                    `;
+
+                    table.appendChild(suiteRow);
+                }
+
+
+                const row =
+                    document.createElement("tr");
+
+                row.innerHTML = `
+                    <td class="${result.ok ? "ok" : "fail"}">
+                        ${result.ok ? "OK" : "FAIL"}
+                    </td>
+
+                    <td>${result.name}</td>
+
+                    <td>${result.description}</td>
+
+                    <td>${formatValue(result.expected)}</td>
+
+                    <td>${formatValue(result.actual)}</td>
+                `;
+
+                table.appendChild(row);
+            }
+
+            const passed = results.filter(
+                result => result.ok
+            ).length;
+
+            const failed =
+                results.length - passed;
+
+            document.getElementById(
+                "testSummary"
+            ).textContent =
+                `${passed}/${results.length} tests passed` +
+                (failed
+                    ? `, ${failed} failed.`
+                    : ".");
+
+            console.log(
+                `${passed}/${results.length} tests passed.`
+            );
+
+            for (const result of results) {
+                console.log(
+                    `${result.ok ? "OK" : "FAIL"}: ${result.name}`
+                );
+
+                console.log(
+                    "Expected:",
+                    result.expected
+                );
+
+                console.log(
+                    "Actual:",
+                    result.actual
+                );
+            }
+        }
+
+
+        runTests();
+    </script>
+
+</body>
+
+</html>

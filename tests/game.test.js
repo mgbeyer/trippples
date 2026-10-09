@@ -1,0 +1,276 @@
+function createGameTestBoard() {
+    return Array.from(
+        { length: BOARD_SIZE },
+        () => Array.from(
+            { length: BOARD_SIZE },
+            () => ({
+                type: "test",
+                mask: ANY
+            })
+        )
+    );
+}
+
+
+function testPlayerSwitch() {
+    const game = new Game();
+
+    game.board = createGameTestBoard();
+
+    game.players = {
+        orange: {
+            x: 4,
+            y: 7,
+            reached: 0
+        },
+
+        blue: {
+            x: 3,
+            y: 7,
+            reached: 0
+        }
+    };
+
+    game.currentPlayer = "orange";
+
+    game.move(
+        { x: 4, y: 7 },
+        { x: 5, y: 7 }
+    );
+
+    const actual = game.getCurrentPlayer();
+    const expected = "blue";
+
+    return {
+        expected,
+        actual
+    };
+}
+
+
+function testGoalProgress() {
+    const game = new Game();
+
+    game.board = createGameTestBoard();
+
+    game.players = {
+        orange: {
+            x: 5,
+            y: 7,
+            reached: 0
+        },
+
+        blue: {
+            x: 3,
+            y: 7,
+            reached: 0
+        }
+    };
+
+    game.currentPlayer = "orange";
+
+    game.move(
+        { x: 5, y: 7 },
+        { x: 6, y: 6 }
+    );
+
+    const actual = game.getPlayerState(
+        "orange"
+    ).reached;
+
+    const expected = 1;
+
+    return {
+        expected,
+        actual
+    };
+}
+
+
+function testFinalGoalWinsGame() {
+    const game = new Game();
+
+    game.board = createGameTestBoard();
+
+    game.players = {
+        orange: {
+            x: 4,
+            y: 7,
+            reached: 4
+        },
+
+        blue: {
+            x: 0,
+            y: 0,
+            reached: 0
+        }
+    };
+
+    game.currentPlayer = "orange";
+
+    const result = game.move(
+        { x: 4, y: 7 },
+        { x: 3, y: 7 }
+    );
+
+    const actual = {
+        gameOver: game.gameOver,
+        winner: game.winner,
+        won: result.won
+    };
+
+    const expected = {
+        gameOver: true,
+        winner: "orange",
+        won: true
+    };
+
+    return {
+        expected,
+        actual
+    };
+}
+
+
+function testNoLegalMoveWinsForOpponent() {
+    const game = new Game();
+
+    game.board = createGameTestBoard();
+
+    game.players = {
+        orange: {
+            x: 2,
+            y: 2,
+            reached: 0
+        },
+
+        blue: {
+            x: 0,
+            y: 0,
+            reached: 0
+        }
+    };
+
+    game.board[0][0] = {
+        type: "test",
+        mask: ANY
+    };
+
+    game.board[1][2] = {
+        type: "test",
+        mask: 1 << 7
+    };
+
+    game.currentPlayer = "orange";
+
+    game.move(
+        { x: 2, y: 2 },
+        { x: 2, y: 1 }
+    );
+
+    const actual = {
+        gameOver: game.gameOver,
+        winner: game.winner
+    };
+
+    const expected = {
+        gameOver: true,
+        winner: "orange"
+    };
+
+    return {
+        expected,
+        actual
+    };
+}
+
+
+function testUndo() {
+    const game = new Game();
+
+    game.board = createGameTestBoard();
+
+    game.players = {
+        orange: {
+            x: 4,
+            y: 7,
+            reached: 0
+        },
+
+        blue: {
+            x: 3,
+            y: 7,
+            reached: 0
+        }
+    };
+
+    game.currentPlayer = "orange";
+
+    game.move(
+        { x: 4, y: 7 },
+        { x: 5, y: 7 }
+    );
+
+    game.undo();
+
+    const actual = {
+        orange: game.getPlayerPosition("orange"),
+        currentPlayer: game.getCurrentPlayer()
+    };
+
+    const expected = {
+        orange: {
+            x: 4,
+            y: 7
+        },
+        currentPlayer: "orange"
+    };
+
+    return {
+        expected,
+        actual
+    };
+}
+
+
+TESTS.push(
+    {
+        suite: "Game",
+        name: "Player switch",
+        description:
+            "Checks that the turn changes to the other player after a valid move.",
+        test: testPlayerSwitch
+    },
+
+    {
+        suite: "Game",
+        name: "Goal progress",
+        description:
+            "Checks that reaching the next goal advances the player's progress.",
+        test: testGoalProgress
+    },
+
+    {
+        suite: "Game",
+        name: "Final goal wins game",
+        description:
+            "Checks that reaching the fifth and final goal ends the game.",
+        test: testFinalGoalWinsGame
+    },
+
+    {
+        suite: "Game",
+        name: "No legal move wins for opponent",
+        description:
+            "Checks that a player with no legal move loses the game.",
+        test: testNoLegalMoveWinsForOpponent
+    },
+
+    {
+        suite: "Game",
+        name: "Undo",
+        description:
+            "Checks that undo restores the previous player position and turn.",
+        test: testUndo
+    }
+);
