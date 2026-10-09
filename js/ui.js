@@ -212,6 +212,14 @@ class UI {
             for (let x = 0; x < 8; x++) {
                 const t = board[y][x];
 
+
+                const currentPlayer = this.game.getCurrentPlayer();
+                const playerPosition = this.game.getPlayerPosition(currentPlayer);
+
+                const isCurrentPosition =
+                    playerPosition.x === x &&
+                    playerPosition.y === y;
+
                 c.fillStyle = (x + y) % 2
                     ? "#c9c9c9"
                     : "#d7d7d7";
@@ -223,6 +231,19 @@ class UI {
                     k
                 );
 
+                if (isCurrentPosition) {
+                    c.fillStyle = currentPlayer === "blue"
+                        ? "rgba(65, 105, 161, 0.22)"
+                        : "rgba(217, 121, 37, 0.22)";
+
+                    c.fillRect(
+                        this.boardLeft + x * k,
+                        this.boardTop + y * k,
+                        k,
+                        k
+                    );
+                }
+                
                 if (t.type === "parcours") {
                     const player = this.game.getCurrentPlayer();
                     const owners = this.game.getGoalOwners(x, y);
