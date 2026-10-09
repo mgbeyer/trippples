@@ -28,11 +28,37 @@
             <button id="undoButton" type="button">Undo</button>
         </nav>
         
-        <div id="boardArea">
-            <canvas
-                id="gameCanvas"
-                aria-label="Trippples game board"
-            ></canvas>
+        <div id="gameLayout">
+            <div id="boardArea">
+                <canvas
+                    id="gameCanvas"
+                    aria-label="Trippples game board"
+                ></canvas>
+            </div>
+
+            <aside id="gameInfo" aria-label="Player progress">
+                <section class="playerInfo">
+                    <h2>Spieler A – Blau</h2>
+                    <svg
+                        id="blueMiniMap"
+                        class="miniMap"
+                        viewBox="0 0 150 150"
+                        role="img"
+                        aria-label="Parcoursfortschritt von Spieler A"
+                    ></svg>
+                </section>
+
+                <section class="playerInfo">
+                    <h2>Spieler B – Orange</h2>
+                    <svg
+                        id="orangeMiniMap"
+                        class="miniMap"
+                        viewBox="0 0 150 150"
+                        role="img"
+                        aria-label="Parcoursfortschritt von Spieler B"
+                    ></svg>
+                </section>
+            </aside>
         </div>
 
         <div id="gameStatus" role="status" aria-live="polite"></div>

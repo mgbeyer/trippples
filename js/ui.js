@@ -9,7 +9,7 @@ const UI_CONFIG = {
 };
 
 class UI {
-    constructor(canvas, boardArea, status, game, newGameButton, undoButton) {
+    constructor(canvas, boardArea, status, game, newGameButton, undoButton, blueMiniMap, orangeMiniMap) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.boardArea = boardArea;
@@ -17,7 +17,10 @@ class UI {
         this.game = game;
         this.newGameButton = newGameButton;
         this.undoButton = undoButton;
-
+        this.miniMaps = {
+            blue: blueMiniMap,
+            orange: orangeMiniMap
+        };
         this.drag = null;
         this.boardLeft = 0;
         this.boardTop = 0;
@@ -299,6 +302,7 @@ class UI {
         }
 
         this.updateStatus();
+        this.renderMiniMaps();
 
         this.undoButton.disabled = this.game.history.length === 0;
     }
@@ -336,6 +340,188 @@ class UI {
         c.restore();
     }
     
+    renderMiniMaps() {
+        this.renderMiniMap("blue");
+        this.renderMiniMap("orange");
+    }
+
+    renderMiniMap(player) {
+        const svg = this.miniMaps[player];
+
+        if (!svg) {
+            return;
+        }
+
+        const color = UI_CONFIG.playerColors[player];
+        const state = this.game.getPlayerState(player);
+        const goals = this.game.getGoals(player);
+        const start = this.game.getPlayerStart(player);
+        const finalGoal = goals[goals.length - 1];
+
+        const nextGoal = this.game.gameOver
+            ? null
+            : goals[state.reached];
+
+        const from = state.reached === 0
+            ? start
+            : goals[state.reached - 1];
+
+        const point = p => ({
+            x: 25 + p.x * 15,
+            y: 25 + p.y * 15
+        });
+
+        let activeLine = "";
+
+        if (nextGoal && from) {
+            const a = point(from);
+            const b = point(nextGoal);
+
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const length = Math.hypot(dx, dy);
+
+            if (length > 0) {
+                const offsetStart = 9;
+                const offsetEnd = 11;
+
+                activeLine = `
+                    <line
+                        x1="${a.x + dx / length * offsetStart}"
+                        y1="${a.y + dy / length * offsetStart}"
+                        x2="${b.x - dx / length * offsetEnd}"
+                        y2="${b.y - dy / length * offsetEnd}"
+                        stroke="${color}"
+                        stroke-width="3.5"
+                        stroke-linecap="round"
+                        marker-end="url(#arrow-${player})"
+                    />
+                `;
+            }
+        }
+
+        const stations = goals.slice(0, -1).map((goal, index) => {
+            const p = point(goal);
+            const reached = index < state.reached;
+
+            const active = nextGoal &&
+                nextGoal.x === goal.x &&
+                nextGoal.y === goal.y;
+
+            return `
+                <circle
+                    cx="${p.x}"
+                    cy="${p.y}"
+                    r="${active ? 10 : 8}"
+                    fill="#dedede"
+                    stroke="${active ? color : "#555"}"
+                    stroke-width="${active ? 2.5 : 1.5}"
+                />
+
+                ${reached ? `
+                    <path
+                        d="M ${p.x - 3} ${p.y + 4}
+                        V ${p.y - 5}
+                        L ${p.x + 4} ${p.y - 3}
+                        L ${p.x - 3} ${p.y}
+                        Z"
+                        fill="${color}"
+                        stroke="${color}"
+                        stroke-width="1.2"
+                        stroke-linejoin="round"
+                    />
+                ` : ""}
+            `;
+        }).join("");
+
+        const startPoint = point(start);
+        const finalPoint = point(finalGoal);
+
+        const finalReached = state.reached >= goals.length;
+
+        const finalIsActive = nextGoal &&
+            nextGoal.x === finalGoal.x &&
+            nextGoal.y === finalGoal.y;
+
+        svg.innerHTML = `
+            <title>Parcours von ${player === "blue"
+                ? "Spieler A"
+                : "Spieler B"}</title>
+
+            <defs>
+                <marker
+                    id="arrow-${player}"
+                    markerWidth="7"
+                    markerHeight="7"
+                    refX="5"
+                    refY="3.5"
+                    orient="auto"
+                    markerUnits="userSpaceOnUse"
+                >
+                    <path
+                        d="M 0 0 L 7 3.5 L 0 7 Z"
+                        fill="${color}"
+                    />
+                </marker>
+            </defs>
+
+            ${activeLine}
+
+            ${stations}
+
+            <!-- Eigener Start -->
+            <circle
+                cx="${startPoint.x}"
+                cy="${startPoint.y}"
+                r="7"
+                fill="${color}"
+                stroke="#222"
+                stroke-width="1"
+            />
+            <text
+                x="${startPoint.x}"
+                y="${startPoint.y + 3}"
+                font-size="8"
+                text-anchor="middle"
+                fill="#fff"
+                font-weight="bold"
+            >S</text>
+
+            <!-- Finales Ziel: Startfeld des Gegners -->
+            ${finalIsActive ? `
+                <rect
+                    x="${finalPoint.x - 11}"
+                    y="${finalPoint.y - 11}"
+                    width="22"
+                    height="22"
+                    rx="2"
+                    fill="none"
+                    stroke="${color}"
+                    stroke-width="2"
+                />
+            ` : ""}
+
+            <rect
+                x="${finalPoint.x - 7}"
+                y="${finalPoint.y - 7}"
+                width="14"
+                height="14"
+                rx="2"
+                fill="${finalReached ? color : "#303134"}"
+                stroke="${color}"
+                stroke-width="1.5"
+            />
+            <text
+                x="${finalPoint.x}"
+                y="${finalPoint.y + 3}"
+                font-size="8"
+                text-anchor="middle"
+                fill="#fff"
+                font-weight="bold"
+            >Z</text>
+        `;
+    }
+
     updateStatus() {
         const state = this.game.getState();
 

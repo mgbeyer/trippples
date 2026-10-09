@@ -91,6 +91,14 @@ class Game {
         };
     }
 
+    getGoals(player) {
+        return GOALS[player].map(goal => ({ ...goal }));
+    }
+
+    getPlayerStart(player) {
+        return { ...STARTS[player] };
+    }
+
     hasReachedGoal(x, y) {
         return Object.keys(this.players).some(player => {
             const reached = this.players[player].reached;
