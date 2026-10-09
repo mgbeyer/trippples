@@ -1,5 +1,7 @@
 const UI_CONFIG = {
-    maxCellSize: 75
+    maxCellSize: 75,
+    pieceOpacity: 0.65,
+    pieceRadius: 0.3       // fraction of cell size
 };
 
 class UI {
@@ -414,6 +416,8 @@ class UI {
     drawPieceAt(x, y, n) {
         const q = this.ctx;
 
+        q.globalAlpha = UI_CONFIG.pieceOpacity;
+
         q.fillStyle = n === "orange"
             ? "#d97925"
             : "#4169a1";
@@ -425,12 +429,14 @@ class UI {
         q.arc(
             x,
             y,
-            0.25 * this.cellSize,
+            UI_CONFIG.pieceRadius * this.cellSize,
             0,
             Math.PI * 2
         );
 
         q.fill();
         q.stroke();
+
+        q.globalAlpha = 1;
     }
 }
