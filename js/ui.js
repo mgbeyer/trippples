@@ -9,6 +9,7 @@ class UI {
         this.boardArea = boardArea;
         this.status = status;
         this.game = game;
+        this.newGameButton = newGameButton;
 
         this.drag = null;
         this.boardLeft = 0;
@@ -20,6 +21,12 @@ class UI {
         canvas.addEventListener("pointercancel", e => this.up(e));
 
         addEventListener("resize", () => this.resize());
+
+        this.newGameButton.addEventListener("click", () => {
+            this.drag = null;
+            this.game.newGame();
+            this.render();
+        });
 
         this.resize();
     }

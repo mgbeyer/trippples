@@ -56,3 +56,29 @@ canvas {
     text-align: center;
     font-weight: 600;
 }
+
+
+#gameMenu {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+#gameMenu button {
+    padding: 0.5rem 0.85rem;
+    border: 1px solid #666;
+    border-radius: 4px;
+    background: #303134;
+    color: #eee;
+    font: inherit;
+    cursor: pointer;
+}
+
+#gameMenu button:hover {
+    background: #414247;
+}
+
+#gameMenu button:focus-visible {
+    outline: 2px solid #8ab4f8;
+    outline-offset: 2px;
+}
