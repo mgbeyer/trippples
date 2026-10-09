@@ -91,6 +91,26 @@ class Game {
         };
     }
 
+    hasReachedGoal(x, y) {
+        return Object.keys(this.players).some(player => {
+            const reached = this.players[player].reached;
+
+            return GOALS[player]
+                .slice(0, reached)
+                .some(goal => goal.x === x && goal.y === y);
+        });
+    }
+
+    getGoalOwner(x, y) {
+        return Object.keys(this.players).find(player => {
+            const reached = this.players[player].reached;
+
+            return GOALS[player]
+                .slice(0, reached)
+                .some(goal => goal.x === x && goal.y === y);
+        }) ?? null;
+    }
+
     getCurrentGoal(player) {
         return GOALS[player][this.players[player].reached];
     }
@@ -180,7 +200,6 @@ class Game {
             ok: true
         };
     }
-
 
     undo() {
         if (!this.history.length) {

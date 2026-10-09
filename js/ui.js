@@ -216,8 +216,10 @@ class UI {
                     k
                 );
 
+
                 if (t.type === "parcours") {
-                    this.goal(x, y);
+                    const owner = this.game.getGoalOwner(x, y);
+                    this.goal(x, y, owner);
                 }
 
                 if (t.type === "start") {
@@ -348,7 +350,7 @@ class UI {
             : "playing";
     }
     
-    goal(x, y) {
+    goal(x, y, owner = null) {
         const c = this.cell(x, y);
         const q = this.ctx;
 
@@ -362,29 +364,63 @@ class UI {
             0.4 * this.cellSize
         );
 
-        q.beginPath();
+        if (owner) {
+            // flagstaff
+            q.beginPath();
+            q.moveTo(
+                c.x - 0.08 * this.cellSize,
+                c.y + 0.14 * this.cellSize
+            );
+            q.lineTo(
+                c.x - 0.08 * this.cellSize,
+                c.y - 0.14 * this.cellSize
+            );
+            q.stroke();
 
-        q.moveTo(
-            c.x - 0.14 * this.cellSize,
-            c.y - 0.14 * this.cellSize
-        );
+            // draw flag
+            q.fillStyle = owner === "blue"
+                ? "#4169a1"
+                : "#d97925";
+            q.beginPath();
+            q.moveTo(
+                c.x - 0.07 * this.cellSize,
+                c.y - 0.13 * this.cellSize
+            );
+            q.lineTo(
+                c.x + 0.15 * this.cellSize,
+                c.y - 0.06 * this.cellSize
+            );
+            q.lineTo(
+                c.x - 0.07 * this.cellSize,
+                c.y + 0.01 * this.cellSize
+            );
+            q.closePath();
+            q.fill();
+        } else {    // draw X
+            q.beginPath();
 
-        q.lineTo(
-            c.x + 0.14 * this.cellSize,
-            c.y + 0.14 * this.cellSize
-        );
+            q.moveTo(
+                c.x - 0.14 * this.cellSize,
+                c.y - 0.14 * this.cellSize
+            );
 
-        q.moveTo(
-            c.x + 0.14 * this.cellSize,
-            c.y - 0.14 * this.cellSize
-        );
+            q.lineTo(
+                c.x + 0.14 * this.cellSize,
+                c.y + 0.14 * this.cellSize
+            );
 
-        q.lineTo(
-            c.x - 0.14 * this.cellSize,
-            c.y + 0.14 * this.cellSize
-        );
+            q.moveTo(
+                c.x + 0.14 * this.cellSize,
+                c.y - 0.14 * this.cellSize
+            );
 
-        q.stroke();
+            q.lineTo(
+                c.x - 0.14 * this.cellSize,
+                c.y + 0.14 * this.cellSize
+            );
+
+            q.stroke();
+        }
     }
 
     arrows(x, y, m) {
