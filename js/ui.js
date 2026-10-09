@@ -206,6 +206,8 @@ class UI {
             c.stroke();
         }
 
+        this.drawCurrentGoal();
+
         for (const p of ["orange", "blue"]) {
             if (!(this.drag && this.drag.player === p)) {
                 this.piece(
@@ -226,6 +228,41 @@ class UI {
         }
     }
 
+    drawCurrentGoal() {
+        if (this.game.gameOver) {
+            return;
+        }
+
+        const player = this.game.getCurrentPlayer();
+        const goal = this.game.getCurrentGoal(player);
+
+        if (!goal) {
+            return;
+        }
+
+        const k = this.cellSize;
+        const x = this.boardLeft + goal.x * k;
+        const y = this.boardTop + goal.y * k;
+        const c = this.ctx;
+
+        c.save();
+
+        c.strokeStyle = player === "blue"
+            ? "#4169a1"
+            : "#d97925";
+
+        c.lineWidth = 3;
+
+        c.strokeRect(
+            x + 2,
+            y + 2,
+            k - 4,
+            k - 4
+        );
+
+        c.restore();
+    }
+    
     goal(x, y) {
         const c = this.cell(x, y);
         const q = this.ctx;
