@@ -96,6 +96,41 @@ class UI {
             : null;
     }
 
+
+    updateCursor(e) {
+        if (this.game.gameOver) {
+            this.canvas.style.cursor = "default";
+            return;
+        }
+
+        const p = this.point(e.clientX, e.clientY);
+
+        if (!p) {
+            this.canvas.style.cursor = "default";
+            return;
+        }
+
+        const player = this.game.getCurrentPlayer();
+        const pos = this.game.getPlayerPosition(player);
+
+        if (pos.x !== p.x || pos.y !== p.y) {
+            this.canvas.style.cursor = "default";
+            return;
+        }
+
+        const rect = this.canvas.getBoundingClientRect();
+        const center = this.cell(pos.x, pos.y);
+
+        const dx = e.clientX - rect.left - center.x;
+        const dy = e.clientY - rect.top - center.y;
+        const radius = UI_CONFIG.pieceRadius * this.cellSize;
+
+        this.canvas.style.cursor =
+            dx * dx + dy * dy <= radius * radius
+                ? "grab"
+                : "default";
+    }
+
     down(e) {
         if (this.game.gameOver) {
             return;
@@ -118,11 +153,14 @@ class UI {
             Y: e.clientY
         };
 
+        this.canvas.style.cursor = "grabbing";
+
         this.render();
     }
 
     move(e) {
         if (!this.drag) {
+            this.updateCursor(e);
             return;
         }
 
@@ -139,6 +177,8 @@ class UI {
 
         const d = this.drag;
         this.drag = null;
+
+        this.updateCursor(e);
 
         const p = this.point(e.clientX, e.clientY);
 
