@@ -3,10 +3,11 @@ const UI_CONFIG = {
 };
 
 class UI {
-    constructor(canvas, boardArea, game) {
+    constructor(canvas, boardArea, status, game) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.boardArea = boardArea;
+        this.status = status;
         this.game = game;
 
         this.drag = null;
@@ -226,6 +227,8 @@ class UI {
                 this.drag.player
             );
         }
+
+        this.updateStatus();
     }
 
     drawCurrentGoal() {
@@ -261,6 +264,27 @@ class UI {
         );
 
         c.restore();
+    }
+    
+    updateStatus() {
+        const state = this.game.getState();
+
+        const playerNames = {
+            blue: "Spieler A – Blau",
+            orange: "Spieler B – Orange"
+        };
+
+        if (state.gameOver) {
+            this.status.textContent =
+                `${playerNames[state.winner]} gewinnt!`;
+        } else {
+            this.status.textContent =
+                `${playerNames[state.currentPlayer]} ist am Zug.`;
+        }
+
+        this.status.dataset.state = state.gameOver
+            ? "finished"
+            : "playing";
     }
     
     goal(x, y) {

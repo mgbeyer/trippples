@@ -3,4 +3,6 @@ const boardArea = document.getElementById("boardArea");
 
 const game = new Game();
 
-new UI(canvas, boardArea, game);
+const status = document.getElementById("gameStatus");
+
+new UI(canvas, boardArea, status, game);
