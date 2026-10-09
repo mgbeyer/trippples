@@ -282,7 +282,8 @@ class UI {
             this.drawPieceAt(
                 this.drag.X - r.left,
                 this.drag.Y - r.top,
-                this.drag.player
+                this.drag.player,
+                true
             );
         }
 
@@ -453,17 +454,25 @@ class UI {
         this.drawPieceAt(c.x, c.y, n);
     }
 
-    drawPieceAt(x, y, n) {
+
+    drawPieceAt(x, y, n, isDragging = false) {
         const q = this.ctx;
 
-        q.globalAlpha = UI_CONFIG.pieceOpacity;
+        q.save();
+
+        q.globalAlpha = isDragging
+            ? 1
+            : UI_CONFIG.pieceOpacity;
 
         q.fillStyle = n === "orange"
             ? "#d97925"
             : "#4169a1";
 
         q.strokeStyle = "#222";
-        q.lineWidth = Math.max(1, 0.025 * this.cellSize);
+        q.lineWidth = Math.max(
+            1,
+            (isDragging ? 0.045 : 0.025) * this.cellSize
+        );
 
         q.beginPath();
         q.arc(
@@ -477,6 +486,7 @@ class UI {
         q.fill();
         q.stroke();
 
-        q.globalAlpha = 1;
+        q.restore();
     }
+
 }
