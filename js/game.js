@@ -101,14 +101,14 @@ class Game {
         });
     }
 
-    getGoalOwner(x, y) {
-        return Object.keys(this.players).find(player => {
+    getGoalOwners(x, y) {
+        return Object.keys(this.players).filter(player => {
             const reached = this.players[player].reached;
 
             return GOALS[player]
                 .slice(0, reached)
                 .some(goal => goal.x === x && goal.y === y);
-        }) ?? null;
+        });
     }
 
     getCurrentGoal(player) {

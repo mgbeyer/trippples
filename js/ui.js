@@ -1,7 +1,11 @@
 const UI_CONFIG = {
     maxCellSize: 75,
     pieceOpacity: 0.65,
-    pieceRadius: 0.3       // fraction of cell size
+    pieceRadius: 0.3,      // fraction of cell size
+    playerColors: {
+        blue: "#4169a1",
+        orange: "#d97925"
+    }
 };
 
 class UI {
@@ -216,10 +220,15 @@ class UI {
                     k
                 );
 
-
                 if (t.type === "parcours") {
-                    const owner = this.game.getGoalOwner(x, y);
-                    this.goal(x, y, owner);
+                    const player = this.game.getCurrentPlayer();
+                    const owners = this.game.getGoalOwners(x, y);
+
+                    this.goal(
+                        x,
+                        y,
+                        owners.includes(player) ? [player] : []
+                    );
                 }
 
                 if (t.type === "start") {
@@ -313,9 +322,7 @@ class UI {
 
         c.save();
 
-        c.strokeStyle = player === "blue"
-            ? "#4169a1"
-            : "#d97925";
+        c.strokeStyle = UI_CONFIG.playerColors[player];
 
         c.lineWidth = 3;
 
@@ -350,7 +357,7 @@ class UI {
             : "playing";
     }
     
-    goal(x, y, owner = null) {
+    goal(x, y, owners = []) {
         const c = this.cell(x, y);
         const q = this.ctx;
 
@@ -364,39 +371,47 @@ class UI {
             0.4 * this.cellSize
         );
 
-        if (owner) {
-            // flagstaff
+        if (owners.length > 0) {
+            const flagLeft = c.x - 0.07 * this.cellSize;
+            const flagTop = c.y - 0.13 * this.cellSize;
+            const flagRight = c.x + 0.15 * this.cellSize;
+            const flagMiddle = c.y - 0.06 * this.cellSize;
+            const flagBottom = c.y + 0.01 * this.cellSize;
+
+            // Flaggenmast
             q.beginPath();
-            q.moveTo(
-                c.x - 0.08 * this.cellSize,
-                c.y + 0.14 * this.cellSize
-            );
-            q.lineTo(
-                c.x - 0.08 * this.cellSize,
-                c.y - 0.14 * this.cellSize
-            );
+            q.moveTo(flagLeft, c.y + 0.14 * this.cellSize);
+            q.lineTo(flagLeft, flagTop);
             q.stroke();
 
-            // draw flag
-            q.fillStyle = owner === "blue"
-                ? "#4169a1"
-                : "#d97925";
-            q.beginPath();
-            q.moveTo(
-                c.x - 0.07 * this.cellSize,
-                c.y - 0.13 * this.cellSize
-            );
-            q.lineTo(
-                c.x + 0.15 * this.cellSize,
-                c.y - 0.06 * this.cellSize
-            );
-            q.lineTo(
-                c.x - 0.07 * this.cellSize,
-                c.y + 0.01 * this.cellSize
-            );
-            q.closePath();
-            q.fill();
-        } else {    // draw X
+            if (owners.length === 1) {
+                // Eine Farbe, wenn nur ein Spieler das Feld erreicht hat
+                q.fillStyle = UI_CONFIG.playerColors[owners[0]];
+                q.beginPath();
+                q.moveTo(flagLeft, flagTop);
+                q.lineTo(flagRight, flagMiddle);
+                q.lineTo(flagLeft, flagBottom);
+                q.closePath();
+                q.fill();
+            } else {
+                // Zweifarbige Flagge, wenn beide Spieler das Feld erreicht haben
+                q.fillStyle = UI_CONFIG.playerColors.blue;
+                q.beginPath();
+                q.moveTo(flagLeft, flagTop);
+                q.lineTo(flagRight, flagMiddle);
+                q.lineTo(flagLeft, flagMiddle);
+                q.closePath();
+                q.fill();
+
+                q.fillStyle = UI_CONFIG.playerColors.orange;
+                q.beginPath();
+                q.moveTo(flagLeft, flagMiddle);
+                q.lineTo(flagRight, flagMiddle);
+                q.lineTo(flagLeft, flagBottom);
+                q.closePath();
+                q.fill();
+            }
+        } else {    // zeichne X
             q.beginPath();
 
             q.moveTo(
@@ -500,9 +515,7 @@ class UI {
             ? 1
             : UI_CONFIG.pieceOpacity;
 
-        q.fillStyle = n === "orange"
-            ? "#d97925"
-            : "#4169a1";
+        q.fillStyle = UI_CONFIG.playerColors[n];
 
         q.strokeStyle = "#222";
         q.lineWidth = Math.max(
