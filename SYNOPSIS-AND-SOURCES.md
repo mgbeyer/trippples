@@ -142,4 +142,4 @@ Before implementing the POC, the following points should be verified:
 * Whether any optional rules or variants should be supported
 * Which rules were used by the historical Amiga/DOS implementations
 
-The POC should implement **one clearly defined rule set**, with any
+The POC should implement **one clearly defined rule set**, with any deviations from the original rules documented explicitly.
