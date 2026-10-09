@@ -233,6 +233,108 @@ function testUndo() {
 }
 
 
+function getRelevantGameState(game) {
+    return {
+        players: structuredClone(game.players),
+        currentPlayer: game.getCurrentPlayer(),
+        gameOver: game.gameOver,
+        winner: game.winner,
+        historyLength: game.history.length
+    };
+}
+
+
+function testWrongPiece() {
+    const game = new Game();
+
+    game.board = createGameTestBoard();
+
+    game.currentPlayer = "orange";
+
+    const before = getRelevantGameState(game);
+
+    const result = game.move(
+        { x: 3, y: 7 },
+        { x: 4, y: 6 }
+    );
+
+    const actual = {
+        result,
+        state: getRelevantGameState(game)
+    };
+
+    const expected = {
+        result: {
+            ok: false,
+            reason: "wrong-piece"
+        },
+        state: before
+    };
+
+    return { expected, actual };
+}
+
+
+function testIllegalMove() {
+    const game = new Game();
+
+    game.board = createGameTestBoard();
+
+    const before = getRelevantGameState(game);
+
+    const result = game.move(
+        { x: 4, y: 7 },
+        { x: 0, y: 0 }
+    );
+
+    const actual = {
+        result,
+        state: getRelevantGameState(game)
+    };
+
+    const expected = {
+        result: {
+            ok: false,
+            reason: "illegal-move"
+        },
+        state: before
+    };
+
+    return { expected, actual };
+}
+
+
+function testMoveAfterGameOver() {
+    const game = new Game();
+
+    game.board = createGameTestBoard();
+
+    game.gameOver = true;
+    game.winner = "blue";
+
+    const before = getRelevantGameState(game);
+
+    const result = game.move(
+        { x: 4, y: 7 },
+        { x: 5, y: 7 }
+    );
+
+    const actual = {
+        result,
+        state: getRelevantGameState(game)
+    };
+
+    const expected = {
+        result: {
+            ok: false,
+            reason: "game-over"
+        },
+        state: before
+    };
+
+    return { expected, actual };
+}
+
 TESTS.push(
     {
         suite: "Game",
@@ -272,5 +374,29 @@ TESTS.push(
         description:
             "Checks that undo restores the previous player position and turn.",
         test: testUndo
+    },
+
+    {
+        suite: "Game",
+        name: "Wrong piece rejected",
+        description:
+            "Checks that moving the opponent's piece is rejected without changing the game state.",
+        test: testWrongPiece
+    },
+
+    {
+        suite: "Game",
+        name: "Illegal move rejected",
+        description:
+            "Checks that an illegal destination is rejected without changing the game state.",
+        test: testIllegalMove
+    },
+
+    {
+        suite: "Game",
+        name: "Move after game over rejected",
+        description:
+            "Checks that moves are rejected after the game has ended without changing the game state.",
+        test: testMoveAfterGameOver
     }
 );
