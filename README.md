@@ -44,6 +44,8 @@ The implementation is deliberately modular:
 
 The exact responsibilities may evolve as the implementation develops, but the underlying principle remains the same: keep game rules, game state and presentation separate.
 
+<img src="screenshots/scr01.jpg" alt="Trippples game board" width="75%">
+
 ### Current Features
 
 - An 8×8 interactive game board.
