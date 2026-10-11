@@ -20,14 +20,20 @@ const GOALS = {
 class Game {
 
     constructor() {
-        this.blueStarts = false;
+        this.nextAlternatingStarter = "orange";
 
         this.newGame();
     }
 
 
-    newGame() {
-        this.board = createBoard();
+
+    newGame({
+        starterMode = "alternate",
+        boardMode = "random"
+    } = {}) {
+        if (boardMode !== "reuse" || !this.board) {
+            this.board = createBoard();
+        }
 
         this.players = {
             orange: {
@@ -43,11 +49,16 @@ class Game {
             }
         };
 
-        this.currentPlayer = this.blueStarts
-            ? "blue"
-            : "orange";
+        if (starterMode === "blue" || starterMode === "orange") {
+            this.currentPlayer = starterMode;
+        } else {
+            this.currentPlayer = this.nextAlternatingStarter;
 
-        this.blueStarts = !this.blueStarts;
+            this.nextAlternatingStarter =
+                this.nextAlternatingStarter === "orange"
+                    ? "blue"
+                    : "orange";
+        }
 
         this.gameOver = false;
         this.winner = null;

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
 
 <head>
     <meta charset="utf-8">
@@ -22,11 +22,33 @@
 
         <h1>Trippples</h1>
 
-        
-        <nav id="gameMenu" aria-label="Game menu">
-            <button id="newGameButton" type="button">New Game</button>
-            <button id="undoButton" type="button">Undo</button>
-        </nav>
+        <section id="newGameSettings" aria-label="Spielsteuerung">
+            <div class="setting">
+                <label for="startingPlayer">Startspieler</label>
+                <select id="startingPlayer">
+                    <option value="alternate" selected>Abwechselnd</option>
+                    <option value="blue">Spieler A – Blau</option>
+                    <option value="orange">Spieler B – Orange</option>
+                </select>
+            </div>
+
+            <div class="setting">
+                <label for="boardChoice">Spielbrett</label>
+                <select id="boardChoice">
+                    <option value="random" selected>Neues Zufallsbrett</option>
+                    <option value="reuse">Aktuelles Brett beibehalten</option>
+                </select>
+            </div>
+
+            <div class="gameActions">
+                <button id="newGameButton" type="button">
+                    Neues Spiel
+                </button>
+                <button id="undoButton" type="button">
+                    Zug zurücknehmen
+                </button>
+            </div>
+        </section>
         
         <div id="gameLayout">
             <div id="boardArea">

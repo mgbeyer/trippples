@@ -136,37 +136,74 @@ canvas {
     border-radius: 6px;
 }
 
-
-#gameMenu {
+#newGameSettings {
     display: flex;
+    flex-wrap: wrap;
+    align-items: end;
     gap: 0.5rem;
-    margin-bottom: 1rem;
-    padding: 0.65rem;
+    margin-bottom: 0.5rem;
+    padding: 0.4rem 0.5rem;
     background: #2b2c30;
     border: 1px solid #3b3c40;
     border-radius: 6px;
 }
 
-#gameMenu button {
-    padding: 0.5rem 0.85rem;
+#newGameSettings .setting {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+#newGameSettings label {
+    font-size: 0.75rem;
+    color: #ccc;
+}
+
+#newGameSettings select {
+    min-height: 1.8rem;
+    padding: 0.2rem 0.4rem;
     border: 1px solid #666;
     border-radius: 4px;
     background: #303134;
     color: #eee;
     font: inherit;
-    cursor: pointer;
+    font-size: 0.8rem;
 }
 
-#gameMenu button:hover {
-    background: #414247;
-}
-
-#gameMenu button:focus-visible {
+#newGameSettings select:focus-visible {
     outline: 2px solid #8ab4f8;
     outline-offset: 2px;
 }
 
-#gameMenu button:disabled {
+.gameActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-left: auto;
+}
+
+.gameActions button {
+    padding: 0.3rem 0.6rem;
+    border: 1px solid #666;
+    border-radius: 4px;
+    background: #303134;
+    color: #eee;
+    font: inherit;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    cursor: pointer;
+}
+
+.gameActions button:hover {
+    background: #414247;
+}
+
+.gameActions button:focus-visible {
+    outline: 2px solid #8ab4f8;
+    outline-offset: 2px;
+}
+
+.gameActions button:disabled {
     opacity: 0.45;
     cursor: not-allowed;
 }

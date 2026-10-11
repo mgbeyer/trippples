@@ -9,7 +9,18 @@ const UI_CONFIG = {
 };
 
 class UI {
-    constructor(canvas, boardArea, status, game, newGameButton, undoButton, blueMiniMap, orangeMiniMap) {
+    constructor(
+        canvas,
+        boardArea,
+        status,
+        game,
+        newGameButton,
+        undoButton,
+        blueMiniMap,
+        orangeMiniMap,
+        startingPlayerSelect,
+        boardChoiceSelect
+    ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.boardArea = boardArea;
@@ -21,6 +32,8 @@ class UI {
             blue: blueMiniMap,
             orange: orangeMiniMap
         };
+        this.startingPlayerSelect = startingPlayerSelect;
+        this.boardChoiceSelect = boardChoiceSelect;
         this.drag = null;
         this.boardLeft = 0;
         this.boardTop = 0;
@@ -32,9 +45,15 @@ class UI {
 
         addEventListener("resize", () => this.resize());
 
+
         this.newGameButton.addEventListener("click", () => {
             this.drag = null;
-            this.game.newGame();
+
+            this.game.newGame({
+                starterMode: this.startingPlayerSelect.value,
+                boardMode: this.boardChoiceSelect.value
+            });
+
             this.render();
         });
 

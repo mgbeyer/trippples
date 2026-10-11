@@ -8,5 +8,21 @@ const newGameButton = document.getElementById("newGameButton");
 const undoButton = document.getElementById("undoButton");
 const blueMiniMap = document.getElementById("blueMiniMap");
 const orangeMiniMap = document.getElementById("orangeMiniMap");
+const startingPlayerSelect =
+    document.getElementById("startingPlayer");
 
-new UI(canvas, boardArea, statusElement, game, newGameButton, undoButton, blueMiniMap, orangeMiniMap);
+const boardChoiceSelect =
+    document.getElementById("boardChoice");
+
+new UI(
+    canvas,
+    boardArea,
+    statusElement,
+    game,
+    newGameButton,
+    undoButton,
+    blueMiniMap,
+    orangeMiniMap,
+    startingPlayerSelect,
+    boardChoiceSelect
+);
