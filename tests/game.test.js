@@ -380,6 +380,100 @@ function testCanUndoAfterUndo() {
     return { expected, actual };
 }
 
+function testUndoAfterNewGame() {
+    const game = new Game();
+    game.board = createGameTestBoard();
+
+    game.move({ x: 4, y: 7 }, { x: 5, y: 7 });
+    game.newGame();
+
+    const expected = false;
+    const actual = game.canUndo();
+
+    return { expected, actual };
+}
+
+function testUndoAfterWinningMove() {
+    const game = new Game();
+    game.board = createGameTestBoard();
+
+    // Orange is one move away from its final goal.
+    game.players.orange = { x: 4, y: 7, reached: 4 };
+    game.players.blue = { x: 2, y: 6, reached: 0 };
+    game.currentPlayer = "orange";
+
+    const result = game.move(
+        { x: 4, y: 7 },
+        { x: 3, y: 7 }
+    );
+
+    const expected = {
+        ok: true,
+        won: true,
+        gameOver: true,
+        canUndo: true
+    };
+
+    const actual = {
+        ok: result.ok,
+        won: result.won,
+        gameOver: game.gameOver,
+        canUndo: game.canUndo()
+    };
+
+    return { expected, actual };
+}
+
+function testNewGameAfterGameOver() {
+    const game = new Game();
+
+    game.gameOver = true;
+    game.winner = "orange";
+
+    game.newGame();
+
+    const expected = {
+        gameOver: false,
+        winner: null,
+        canUndo: false
+    };
+
+    const actual = {
+        gameOver: game.gameOver,
+        winner: game.winner,
+        canUndo: game.canUndo()
+    };
+
+    return { expected, actual };
+}
+
+
+function testUndoAfterMultipleMoves() {
+    const game = new Game();
+    game.board = createGameTestBoard();
+
+    game.move({ x: 4, y: 7 }, { x: 5, y: 7 });
+    game.move({ x: 3, y: 7 }, { x: 2, y: 7 });
+
+    const undoSucceeded = game.undo();
+
+    const expected = {
+        undoSucceeded: true,
+        currentPlayer: "blue",
+        orangePosition: { x: 5, y: 7 },
+        canUndo: true
+    };
+
+    const actual = {
+        undoSucceeded,
+        currentPlayer: game.getCurrentPlayer(),
+        orangePosition: game.getPlayerPosition("orange"),
+        canUndo: game.canUndo()
+    };
+
+    return { expected, actual };
+}
+
 TESTS.push(
     {
         suite: "Game",
@@ -467,5 +561,31 @@ TESTS.push(
         description:
             "Checks that moves are rejected after the game has ended without changing the game state.",
         test: testMoveAfterGameOver
+    },
+
+    {
+        suite: "Game",
+        name: "Undo after new game",
+        description: "A new game clears the previous undo history.",
+        test: testUndoAfterNewGame
+    },
+    {
+        suite: "Game",
+        name: "Undo after winning move",
+        description: "A winning move can still be undone.",
+        test: testUndoAfterWinningMove
+    },
+    {
+        suite: "Game",
+        name: "New game after game over",
+        description: "A new game resets the finished game state.",
+        test: testNewGameAfterGameOver
+    },
+    {
+        suite: "Game",
+        name: "Undo after multiple moves",
+        description: "Undo restores the previous state and preserves earlier history.",
+        test: testUndoAfterMultipleMoves
     }
+
 );
