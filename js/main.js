@@ -14,6 +14,9 @@ const startingPlayerSelect =
 const boardChoiceSelect =
     document.getElementById("boardChoice");
 
+const legalMovesDisplaySelect =
+    document.getElementById("legalMovesDisplay");
+
 new UI(
     canvas,
     boardArea,
@@ -24,5 +27,6 @@ new UI(
     blueMiniMap,
     orangeMiniMap,
     startingPlayerSelect,
-    boardChoiceSelect
+    boardChoiceSelect,
+    legalMovesDisplaySelect
 );

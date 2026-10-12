@@ -19,7 +19,8 @@ class UI {
         blueMiniMap,
         orangeMiniMap,
         startingPlayerSelect,
-        boardChoiceSelect
+        boardChoiceSelect,
+        legalMovesDisplaySelect
     ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
@@ -34,6 +35,7 @@ class UI {
         };
         this.startingPlayerSelect = startingPlayerSelect;
         this.boardChoiceSelect = boardChoiceSelect;
+        this.legalMovesDisplaySelect = legalMovesDisplaySelect;
         this.drag = null;
         this.boardLeft = 0;
         this.boardTop = 0;
@@ -41,7 +43,10 @@ class UI {
         canvas.addEventListener("pointerdown", e => this.down(e));
         canvas.addEventListener("pointermove", e => this.move(e));
         canvas.addEventListener("pointerup", e => this.up(e));
-        canvas.addEventListener("pointercancel", e => this.up(e));
+        canvas.addEventListener("pointercancel", () => {
+            this.drag = null;
+            this.render();
+        });
 
         addEventListener("resize", () => this.resize());
 
@@ -63,6 +68,10 @@ class UI {
             if (this.game.undo()) {
                 this.render();
             }
+        });
+
+        this.legalMovesDisplaySelect.addEventListener("change", () => {
+            this.render();
         });
 
         this.resize();
@@ -220,6 +229,21 @@ class UI {
         const k = this.cellSize;
         const board = this.game.getBoard();
 
+        const displayMode = this.legalMovesDisplaySelect.value;
+
+        const showLegalMoves =
+            !this.game.gameOver &&
+            (
+                displayMode === "always" ||
+                (displayMode === "dragging" && this.drag !== null)
+            );
+
+        const legalMoveKeys = new Set(
+            showLegalMoves
+                ? this.game.getLegalMoves().map(move => `${move.x},${move.y}`)
+                : []
+        );
+
         c.clearRect(
             0,
             0,
@@ -263,6 +287,17 @@ class UI {
                     );
                 }
                 
+                if (legalMoveKeys.has(`${x},${y}`)) {
+                    c.fillStyle = "rgba(76, 175, 80, 0.28)";
+
+                    c.fillRect(
+                        this.boardLeft + x * k,
+                        this.boardTop + y * k,
+                        k,
+                        k
+                    );
+                }
+
                 if (t.type === "parcours") {
                     const player = this.game.getCurrentPlayer();
                     const owners = this.game.getGoalOwners(x, y);
