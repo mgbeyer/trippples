@@ -220,6 +220,10 @@ class Game {
         };
     }
 
+    canUndo() {
+        return this.history.length > 0;
+    }
+
     undo() {
         if (!this.history.length) {
             return false;

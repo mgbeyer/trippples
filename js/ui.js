@@ -379,7 +379,7 @@ class UI {
         this.updateStatus();
         this.renderMiniMaps();
 
-        this.undoButton.disabled = this.game.history.length === 0;
+        this.undoButton.disabled = !this.game.canUndo();
     }
 
     drawCurrentGoal() {

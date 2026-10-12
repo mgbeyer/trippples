@@ -335,6 +335,51 @@ function testMoveAfterGameOver() {
     return { expected, actual };
 }
 
+
+function testCanUndoInitiallyFalse() {
+    const game = new Game();
+
+    const expected = false;
+    const actual = game.canUndo();
+
+    return { expected, actual };
+}
+
+function testCanUndoAfterMove() {
+    const game = new Game();
+
+    game.board = createGameTestBoard();
+
+    game.move(
+        { x: 4, y: 7 },
+        { x: 5, y: 7 }
+    );
+
+    const expected = true;
+    const actual = game.canUndo();
+
+    return { expected, actual };
+}
+
+
+function testCanUndoAfterUndo() {
+    const game = new Game();
+
+    game.board = createGameTestBoard();
+
+    game.move(
+        { x: 4, y: 7 },
+        { x: 5, y: 7 }
+    );
+
+    game.undo();
+
+    const expected = false;
+    const actual = game.canUndo();
+
+    return { expected, actual };
+}
+
 TESTS.push(
     {
         suite: "Game",
@@ -374,6 +419,30 @@ TESTS.push(
         description:
             "Checks that undo restores the previous player position and turn.",
         test: testUndo
+    },
+
+    {
+        suite: "Game",
+        name: "Can undo initially",
+        description:
+            "Checks that undo is unavailable before any move has been made.",
+        test: testCanUndoInitiallyFalse
+    },
+
+    {
+        suite: "Game",
+        name: "Can undo after move",
+        description:
+            "Checks that undo becomes available after a valid move.",
+        test: testCanUndoAfterMove
+    },
+
+    {
+        suite: "Game",
+        name: "Can undo after undo",
+        description:
+            "Checks that undo becomes unavailable again after undoing the only move.",
+        test: testCanUndoAfterUndo
     },
 
     {
