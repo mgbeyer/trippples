@@ -46,6 +46,7 @@ The implementation is deliberately modular:
 The underlying principle is to keep game rules, game state, and presentation separate, making the logic easier to test and the implementation easier to extend.
 
 ![Trippples game board](screenshots/scr01.jpg)
+![Trippples game board](screenshots/scr02.jpg)
 
 ### Current Features
 
