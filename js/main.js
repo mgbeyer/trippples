@@ -17,7 +17,13 @@ const boardChoiceSelect =
 const legalMovesDisplaySelect =
     document.getElementById("legalMovesDisplay");
 
-new UI(
+const rulesetChoiceSelect =
+    document.getElementById("rulesetChoice");
+
+const rulesetConfirmDialog =
+    document.getElementById("rulesetConfirmDialog");
+
+const ui = new UI(
     canvas,
     boardArea,
     statusElement,
@@ -28,5 +34,41 @@ new UI(
     orangeMiniMap,
     startingPlayerSelect,
     boardChoiceSelect,
-    legalMovesDisplaySelect
+    legalMovesDisplaySelect,
+    rulesetChoiceSelect,
+    rulesetConfirmDialog
 );
+
+let activeRulesetId = game.ruleset.id;
+
+rulesetChoiceSelect.addEventListener("change", () => {
+    if (rulesetChoiceSelect.value === activeRulesetId) {
+        return;
+    }
+
+    rulesetConfirmDialog.showModal();
+});
+
+rulesetConfirmDialog.addEventListener("close", () => {
+    if (rulesetConfirmDialog.returnValue !== "confirm") {
+        rulesetChoiceSelect.value = activeRulesetId;
+        return;
+    }
+
+    const rulesetId = rulesetChoiceSelect.value;
+    const ruleset = RULESETS[rulesetId];
+
+    if (!ruleset) {
+        rulesetChoiceSelect.value = activeRulesetId;
+        return;
+    }
+
+    game.setRuleset(ruleset, {
+        starterMode: startingPlayerSelect.value
+    });
+
+    activeRulesetId = rulesetId;
+
+    ui.drag = null;
+    ui.render();
+});

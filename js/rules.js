@@ -16,10 +16,10 @@ function getOpponentName(player) {
         : "orange";
 }
 
-
 function getLegalMoves(state, player) {
     const me = state.players[player];
     const opponent = state.players[getOpponentName(player)];
+
     const tile = getTile(
         state.board,
         opponent.x,
@@ -32,9 +32,9 @@ function getLegalMoves(state, player) {
 
     const moves = [];
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < DIRECTIONS.length; i++) {
         if (
-            tile.mask !== ANY &&
+            tile.movement !== "any" &&
             !(tile.mask & (1 << i))
         ) {
             continue;
@@ -43,10 +43,18 @@ function getLegalMoves(state, player) {
         const x = me.x + DIRECTIONS[i].x;
         const y = me.y + DIRECTIONS[i].y;
 
-        if (
-            !isInsideBoard(x, y) ||
-            (x === opponent.x && y === opponent.y)
-        ) {
+        if (!isInsideBoard(x, y, state.board.length)) {
+            continue;
+        }
+
+        // Players may not occupy the same field.
+        if (x === opponent.x && y === opponent.y) {
+            continue;
+        }
+
+        const destination = getTile(state.board, x, y);
+
+        if (!destination || destination.movement === "blocked") {
             continue;
         }
 

@@ -24,6 +24,13 @@
 
         <section id="newGameSettings" aria-label="Spielsteuerung">
             <div class="setting">
+                <label for="rulesetChoice">Regelwerk</label>
+                <select id="rulesetChoice">
+                    <option value="current" selected>Aktuelle Regeln</option>
+                    <option value="classic">Klassische Regeln</option>
+                </select>
+            </div>
+            <div class="setting">
                 <label for="startingPlayer">Startspieler</label>
                 <select id="startingPlayer">
                     <option value="alternate" selected>Abwechselnd</option>
@@ -59,6 +66,26 @@
             </div>
         </section>
         
+
+        <dialog id="rulesetConfirmDialog" aria-labelledby="rulesetConfirmTitle">
+            <form method="dialog">
+                <h2 id="rulesetConfirmTitle">Regelwerk wechseln?</h2>
+                <p>
+                    Beim Wechsel des Regelwerks wird ein neues Spielbrett
+                    erstellt. Der aktuelle Spielstand geht verloren.
+                </p>
+
+                <div class="gameActions">
+                    <button type="submit" value="cancel" autofocus>
+                        Abbrechen
+                    </button>
+                    <button type="submit" value="confirm">
+                        Ja, wechseln
+                    </button>
+                </div>
+            </form>
+        </dialog>
+
         <div id="gameLayout">
             <div id="boardArea">
                 <canvas
@@ -96,6 +123,7 @@
 
     </main>
 
+    <script src="js/rulesets.js"></script>
     <script src="js/board.js"></script>
     <script src="js/rules.js"></script>
     <script src="js/game.js"></script>

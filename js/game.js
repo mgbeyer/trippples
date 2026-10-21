@@ -1,50 +1,40 @@
-const GOALS = {
-    orange: [
-        { x: 6, y: 6 },
-        { x: 6, y: 1 },
-        { x: 1, y: 1 },
-        { x: 1, y: 6 },
-        { x: 3, y: 7 }
-    ],
-
-    blue: [
-        { x: 1, y: 6 },
-        { x: 1, y: 1 },
-        { x: 6, y: 1 },
-        { x: 6, y: 6 },
-        { x: 4, y: 7 }
-    ]
-};
-
 
 class Game {
-
-    constructor() {
+    constructor(ruleset = RULESETS.current) {
+        this.ruleset = ruleset;
         this.nextAlternatingStarter = "orange";
 
         this.newGame();
     }
 
+    setRuleset(
+        ruleset,
+        { starterMode = "alternate" } = {}
+    ) {
+        this.ruleset = ruleset;
 
+        this.newGame({
+            starterMode,
+            boardMode: "random"
+        });
+    }
 
     newGame({
         starterMode = "alternate",
         boardMode = "random"
     } = {}) {
         if (boardMode !== "reuse" || !this.board) {
-            this.board = createBoard();
+            this.board = createBoard(this.ruleset);
         }
 
         this.players = {
             orange: {
-                x: 4,
-                y: 7,
+                ...this.ruleset.players.orange.start,
                 reached: 0
             },
 
             blue: {
-                x: 3,
-                y: 7,
+                ...this.ruleset.players.blue.start,
                 reached: 0
             }
         };
@@ -65,7 +55,6 @@ class Game {
         this.history = [];
     }
 
-
     getState() {
         return {
             board: this.board,
@@ -80,11 +69,9 @@ class Game {
         return this.board;
     }
 
-
     getCurrentPlayer() {
         return this.currentPlayer;
     }
-
 
     getPlayerPosition(player) {
         const p = this.players[player];
@@ -95,7 +82,6 @@ class Game {
         };
     }
 
-
     getPlayerState(player) {
         return {
             ...this.players[player]
@@ -103,18 +89,22 @@ class Game {
     }
 
     getGoals(player) {
-        return GOALS[player].map(goal => ({ ...goal }));
+        return this.ruleset.players[player].route.map(
+            position => ({ ...position })
+        );
     }
 
     getPlayerStart(player) {
-        return { ...STARTS[player] };
+        return {
+            ...this.ruleset.players[player].start
+        };
     }
 
     hasReachedGoal(x, y) {
         return Object.keys(this.players).some(player => {
             const reached = this.players[player].reached;
 
-            return GOALS[player]
+            return this.getGoals(player)
                 .slice(0, reached)
                 .some(goal => goal.x === x && goal.y === y);
         });
@@ -124,16 +114,18 @@ class Game {
         return Object.keys(this.players).filter(player => {
             const reached = this.players[player].reached;
 
-            return GOALS[player]
+            return this.getGoals(player)
                 .slice(0, reached)
                 .some(goal => goal.x === x && goal.y === y);
         });
     }
 
     getCurrentGoal(player) {
-        return GOALS[player][this.players[player].reached];
-    }
+        const route = this.ruleset.players[player].route;
+        const goal = route[this.players[player].reached];
 
+        return goal ? { ...goal } : null;
+    }
 
     getLegalMoves(player = this.currentPlayer) {
         return getLegalMoves(
@@ -141,7 +133,6 @@ class Game {
             player
         );
     }
-
 
     move(from, to) {
         if (this.gameOver) {
@@ -196,7 +187,7 @@ class Game {
         ) {
             me.reached++;
 
-            if (me.reached >= GOALS[player].length) {
+            if (me.reached >= this.ruleset.players[player].route.length) {
                 this.gameOver = true;
                 this.winner = player;
 

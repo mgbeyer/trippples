@@ -88,11 +88,11 @@ class UI {
 
         this.cellSize = Math.min(
             UI_CONFIG.maxCellSize,
-            availableWidth / BOARD_SIZE,
-            availableHeight / BOARD_SIZE
+            availableWidth / this.game.ruleset.board.size,
+            availableHeight / this.game.ruleset.board.size
         );
 
-        this.size = this.cellSize * BOARD_SIZE;
+        this.size = this.cellSize * this.game.ruleset.board.size;
 
         this.boardLeft = (availableWidth - this.size) / 2;
         this.boardTop = (availableHeight - this.size) / 2;
@@ -126,7 +126,11 @@ class UI {
             (Y - r.top - this.boardTop) / this.cellSize
         );
 
-        return isInsideBoard(x, y)
+        return isInsideBoard(
+            x,
+            y,
+            this.game.ruleset.board.size
+        )
             ? { x, y }
             : null;
     }
@@ -251,8 +255,10 @@ class UI {
             this.height
         );
 
-        for (let y = 0; y < 8; y++) {
-            for (let x = 0; x < 8; x++) {
+const boardSize = board.length;
+
+        for (let y = 0; y < boardSize; y++) {
+            for (let x = 0; x < boardSize; x++) {
                 const t = board[y][x];
 
 
@@ -298,14 +304,17 @@ class UI {
                     );
                 }
 
-                if (t.type === "parcours") {
+                if (
+                    t.roles?.includes("parcours") ||
+                    t.roles?.includes("target")
+                ) {
                     const player = this.game.getCurrentPlayer();
                     const owners = this.game.getGoalOwners(x, y);
 
                     this.goal(
                         x,
                         y,
-                        owners.includes(player) ? [player] : []
+                        owners.includes(player) ? [player] : owners
                     );
                 }
 
@@ -321,6 +330,26 @@ class UI {
                     );
                 }
 
+                if (t.type === "blocked") {
+                    const cx = this.boardLeft + (x + 0.5) * k;
+                    const cy = this.boardTop + (y + 0.5) * k;
+                    const r = 0.2 * k;
+
+                    c.save();
+                    c.strokeStyle = "#333";
+                    c.lineWidth = Math.max(2, 0.06 * k);
+                    c.lineCap = "round";
+
+                    c.beginPath();
+                    c.moveTo(cx - r, cy - r);
+                    c.lineTo(cx + r, cy + r);
+                    c.moveTo(cx + r, cy - r);
+                    c.lineTo(cx - r, cy + r);
+                    c.stroke();
+
+                    c.restore();
+                }
+
                 if (t.type === "arrows") {
                     this.arrows(x, y, t.mask);
                 }
@@ -330,7 +359,7 @@ class UI {
         c.strokeStyle = "#888";
         c.lineWidth = 1;
 
-        for (let i = 0; i <= 8; i++) {
+        for (let i = 0; i <= boardSize; i++) {
             c.beginPath();
             c.moveTo(
                 this.boardLeft + i * k,
@@ -690,30 +719,33 @@ class UI {
                 q.closePath();
                 q.fill();
             }
-        } else {    // zeichne X
+        } else {
+            // Unvisited waypoint or target: concentric target rings.
+            q.strokeStyle = "#444";
+            q.lineWidth = Math.max(1.5, 0.025 * this.cellSize);
+
+            for (const radius of [0.15, 0.095, 0.04]) {
+                q.beginPath();
+                q.arc(
+                    c.x,
+                    c.y,
+                    radius * this.cellSize,
+                    0,
+                    Math.PI * 2
+                );
+                q.stroke();
+            }
+
+            q.fillStyle = "#444";
             q.beginPath();
-
-            q.moveTo(
-                c.x - 0.14 * this.cellSize,
-                c.y - 0.14 * this.cellSize
+            q.arc(
+                c.x,
+                c.y,
+                0.018 * this.cellSize,
+                0,
+                Math.PI * 2
             );
-
-            q.lineTo(
-                c.x + 0.14 * this.cellSize,
-                c.y + 0.14 * this.cellSize
-            );
-
-            q.moveTo(
-                c.x + 0.14 * this.cellSize,
-                c.y - 0.14 * this.cellSize
-            );
-
-            q.lineTo(
-                c.x - 0.14 * this.cellSize,
-                c.y + 0.14 * this.cellSize
-            );
-
-            q.stroke();
+            q.fill();
         }
     }
 
