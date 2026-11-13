@@ -62,7 +62,9 @@ function createUIHarness() {
         orangeMiniMap,
         createControl("random"),
         createControl("random"),
-        createControl("off")
+        createControl("off"),
+        createControl("none"), // computerPlayerSelect
+        createControl("4")     // searchDepthSelect
     );
 
     const legalMoveRects = [];
