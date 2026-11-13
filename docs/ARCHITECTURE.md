@@ -70,10 +70,14 @@ trippples-poc/
 │   ├── board.js
 │   ├── rules.js
 │   ├── rulesets.js
+│   ├── distance.js
+│   ├── evaluator.js
+│   ├── ai.js
 │   └── ui.js
 ├── tests/
 │   ├── test.html
 │   ├── rules.test.js
+│   ├── distance.test.js
 │   ├── game.test.js
 │   └── ui.test.js
 └── docs/
@@ -86,6 +90,12 @@ The application uses ordinary JavaScript files loaded directly by `index.html`. 
 The test suite can be run in a browser using `tests/test.html`.
 
 The architecture uses classic script loading rather than JavaScript modules. Script order therefore matters: shared definitions must be loaded before the scripts that depend on them.
+
+The AI implementation is divided into three modules:
+
+- `distance.js` provides geometric distance calculations.
+- `evaluator.js` evaluates hypothetical game positions.
+- `ai.js` implements the computer opponent's search strategy.
 
 ## 3. Responsibilities
 
@@ -100,9 +110,12 @@ Responsibilities:
 - Initialize the UI.
 - Connect application-level controls and events.
 - Coordinate ruleset selection and confirmation.
+- Coordinate computer-player configuration and execution.
 - Start the initial rendering process.
 
 It should contain very little game-specific logic.
+
+The application layer determines when the computer should make a move and invokes the AI. The selected move is submitted through the normal Game API.
 
 ### `game.js`
 
@@ -141,13 +154,32 @@ Each ruleset describes:
 - Fixed blocked fields.
 - Player starting positions.
 - Ordered routes, including intermediate waypoints and final targets.
+- The evaluator type and distance metric used by the computer opponent.
 
 The current POC provides two rulesets:
 
 - **Current Rules:** the multi-waypoint variant with two ordinary `ANY` fields.
 - **Classic Rules:** the variant with four central blocked fields and a single final target for each player.
 
-Ruleset definitions should be the single source of truth for these configuration differences. The board generator, game logic, and UI should consume the configuration rather than maintaining separate ruleset-specific implementations.
+Ruleset definitions should be the single source of truth for configuration differences. The board generator, game logic, UI, and AI should consume the configuration rather than maintain separate ruleset-specific implementations.
+
+The evaluator configuration follows this structure:
+
+```js
+evaluator: {
+    type: "wayToGo",
+    distance: "chebyshev"
+}
+```
+
+The two current configurations are:
+
+| Ruleset | Evaluator | Distance metric |
+|---|---|---|
+| Current Rules | WayToGo | Chebyshev |
+| Classic Rules | WayToGo | BFS |
+
+This allows different distance calculations to be selected without embedding ruleset-specific logic in the search algorithm or evaluator.
 
 ### `board.js`
 
@@ -167,7 +199,9 @@ Important functions include:
 
 ```js
 createBoard(ruleset)
+
 getTile(board, x, y)
+
 isInsideBoard(x, y, size)
 ```
 
@@ -213,6 +247,127 @@ The rules module must not access the DOM or Canvas.
 
 Game-level operations such as turn progression, route advancement, victory, and undo are coordinated by `game.js`.
 
+### `distance.js`
+
+Provides geometric distance calculations used by the AI evaluator.
+
+Responsibilities:
+
+- Calculate Chebyshev distance.
+- Calculate obstacle-aware shortest-path distance using BFS.
+- Dispatch distance calculations according to the selected metric.
+
+Important functions include:
+
+```js
+chebyshevDistance(from, to)
+
+bfsDistance(board, from, to)
+
+getDistance(board, from, to, metric)
+```
+
+The two distance metrics serve different purposes:
+
+- **Chebyshev distance:** calculates the minimum number of moves between two positions when movement in all eight directions is geometrically possible.
+- **BFS distance:** calculates the shortest path around blocked fields, taking board obstacles into account.
+
+BFS deliberately ignores directional arrow masks and opponent-dependent movement restrictions. It estimates geometric distance rather than actual legal movement distance.
+
+Actual legal moves continue to be determined exclusively by `rules.js`.
+
+This separation is intentional: the evaluator needs a measure of progress towards an objective, not a complete simulation of the movement rules.
+
+The BFS implementation uses eight-directional movement and permits diagonal movement between blocked fields. A blocked starting or destination field is considered invalid, and an unreachable destination returns `null`.
+
+### `evaluator.js`
+
+Responsible for evaluating hypothetical game positions.
+
+The evaluator is independent of the minimax search algorithm.
+
+Responsibilities:
+
+- Calculate the remaining work for each player.
+- Determine the distance to the player's next objective.
+- Account for route progress.
+- Apply objective-progress penalties.
+- Recognize terminal game positions.
+- Return a score from the perspective of the player being evaluated.
+
+The current implementation uses the `WayToGo` evaluation approach, based on the heuristic of the original Amiga version by Paul Kienitz.
+
+The evaluator is selected through a registry:
+
+```js
+const EVALUATORS = {
+    wayToGo: evaluateWayToGo
+};
+```
+
+The ruleset determines the evaluator type and distance metric. The evaluator uses the configured distance implementation without requiring the minimax algorithm to know its internal details.
+
+The current objective-progress penalties are:
+
+| Objectives reached | Penalty |
+|---:|---:|
+| 0 | +18 |
+| 1 | +13 |
+| 2 | +8 |
+| 3 | +3 |
+| 4 or more | 0 |
+
+Classic Rules has only one final target, so no intermediate-objective penalty is required.
+
+The evaluation score is based on the difference between the opponent's remaining work and the current player's remaining work:
+
+```text
+Score = Opponent remaining work - Own remaining work
+```
+
+A higher score is better for the player whose perspective is being evaluated.
+
+Terminal wins and losses receive dominant positive or negative scores, ensuring that winning takes precedence over ordinary positional evaluation.
+
+The evaluator does not perform additional minimax lookahead. Search and evaluation remain separate responsibilities.
+
+### `ai.js`
+
+Implements the computer opponent.
+
+Responsibilities:
+
+- Obtain legal moves using the existing rules engine.
+- Explore hypothetical future positions.
+- Apply hypothetical moves without modifying the live game.
+- Evaluate resulting positions.
+- Select the best move using minimax.
+- Use alpha-beta pruning to reduce the search space.
+- Support configurable search depth.
+
+The implementation uses:
+
+- Minimax as the search algorithm.
+- Alpha-beta pruning as the search optimization.
+- The configured evaluator to score positions.
+- The existing legal-move calculation from `rules.js`.
+
+Important functions include:
+
+```js
+findBestMove(game, { depth })
+
+minimax(state, depth, alpha, beta, maximizingPlayer)
+```
+
+Search depth is measured in individual moves (plies), not complete player turns.
+
+The search operates on cloned player positions and route progress. The board is shared because it is immutable during a game.
+
+Hypothetical moves must never modify the live `Game` instance or its undo history.
+
+The AI does not implement its own movement rules. It uses the same legal-move calculation as the human player.
+
 ### `ui.js`
 
 Owns browser interaction and rendering.
@@ -234,6 +389,8 @@ It must not independently decide whether a move is legal.
 
 Temporary interaction state, such as the currently dragged piece, belongs to the UI and not to the game state.
 
+The UI also provides controls for selecting the computer player and configuring search depth.
+
 ## 4. Game State
 
 The game state must contain the information necessary to reconstruct a position and continue the game.
@@ -243,28 +400,22 @@ The following is a conceptual example, not the literal object layout of the curr
 ```js
 {
     ruleset: "current",
-
     board: [...],
-
     players: {
         orange: {
             x: 4,
             y: 7,
             reached: 0
         },
-
         blue: {
             x: 3,
             y: 7,
             reached: 0
         }
     },
-
     currentPlayer: "orange",
-
     gameOver: false,
     winner: null,
-
     history: [...]
 }
 ```
@@ -275,12 +426,17 @@ Each player's route is an ordered list of positions. The player's `reached` valu
 
 Undo history preserves the information needed to restore the previous game state.
 
+The AI creates separate hypothetical search states. These contain the player positions, route progress, current player, and terminal-state information needed for search.
+
+The board is shared between the live game and hypothetical search states because it is immutable during a game.
+
 The precise internal representation may evolve, but the following principles should remain:
 
 - Game state is independent of presentation.
 - Game rules operate on game coordinates.
 - Route progression is deterministic.
 - Rendering does not modify game state.
+- AI search does not modify live game state.
 
 ## 5. Board Coordinates
 
@@ -290,6 +446,7 @@ The current rulesets use an 8×8 board:
 
 ```text
 x = 0..7
+
 y = 0..7
 ```
 
@@ -338,6 +495,8 @@ The UI must not duplicate these operations. It requests a move and subsequently 
 
 The public API should remain the only supported route for applying moves to the live game.
 
+The computer opponent also submits its selected move through this API. Hypothetical moves during search are handled separately and do not modify the live game.
+
 ## 7. Legal Move Calculation
 
 The rules engine exposes:
@@ -381,6 +540,8 @@ The implementation must also account for the current game state.
 Legal-move calculation should be deterministic for a given state and player.
 
 It is particularly important that future clients and the computer opponent use this same implementation rather than create their own copies of the movement rules.
+
+The distance algorithms used by the AI do not replace this calculation. They provide geometric estimates and deliberately ignore some of the actual movement restrictions.
 
 ## 8. Drag and Drop
 
@@ -549,19 +710,29 @@ The intended dependencies are:
 main.js
    │
    ├── game.js
+   │      │
+   │      ├── rulesets.js
+   │      ├── board.js
+   │      └── rules.js
+   │
+   ├── ai.js
+   │      │
+   │      ├── rules.js
+   │      └── evaluator.js
+   │              │
+   │              └── distance.js
+   │
    └── ui.js
           │
           └── Canvas / DOM
 
-game.js
-   │
-   ├── rulesets.js
-   ├── board.js
-   └── rules.js
-
 board.js
    │
    └── rulesets.js
+
+distance.js
+   │
+   └── board data only
 ```
 
 The following dependencies must not exist:
@@ -572,17 +743,22 @@ rules.js  → DOM          NO
 board.js  → Canvas       NO
 game.js   → DOM          NO
 game.js   → Pointer API  NO
+ai.js     → Canvas       NO
+ai.js     → DOM          NO
+evaluator.js → Canvas    NO
 ```
 
-The Game Core should be executable independently of browser presentation APIs.
+The Game Core and AI should be executable independently of browser presentation APIs.
 
 The current POC uses direct script loading, so the dependency structure is enforced by code organization and script order rather than an ES module system.
+
+The AI is not part of the Game Core's rules or state-management responsibilities. It is a separate consumer of the Game Core's game-state and rules interfaces.
 
 ## 14. Future Computer Opponent
 
 The original game contains a computer opponent with nine difficulty levels.
 
-The next major planned feature is a computer player using minimax search with alpha–beta pruning.
+The current POC implements the foundation of a computer opponent using minimax search with alpha-beta pruning.
 
 The intended architecture is:
 
@@ -590,7 +766,216 @@ The intended architecture is:
 Computer Player
        │
        ├── reads a game position
+       │
        ├── obtains legal moves
+       │
        ├── explores hypothetical future positions
+       │
        ├── evaluates candidate outcomes
-       └
+       │
+       └── selects the best move
+```
+
+The application layer coordinates the computer player:
+
+```text
+main.js
+   │
+   ▼
+Check whether computer should move
+   │
+   ▼
+ai.js: findBestMove()
+   │
+   ▼
+Selected move
+   │
+   ▼
+game.move(from, to)
+   │
+   ▼
+UI refresh
+```
+
+The AI must not bypass the Game API when applying its chosen move to the live game.
+
+### 14.1 Search Algorithm
+
+The current implementation uses minimax with alpha-beta pruning.
+
+Minimax explores possible future moves, alternating between maximizing and minimizing players.
+
+Alpha-beta pruning avoids exploring branches that cannot affect the final decision.
+
+Search depth is configurable through the UI and is measured in individual moves (plies).
+
+The AI uses the existing legal-move calculation from `rules.js`.
+
+### 14.2 Search State
+
+The AI uses separate hypothetical search states.
+
+These contain the information needed to evaluate and advance a position:
+
+- Both player positions.
+- Both players' route progress.
+- Current player.
+- Game-over state.
+- Winner, where applicable.
+
+The board is shared with the live game because its contents do not change during a game.
+
+Search operations must not mutate the live game state or undo history.
+
+### 14.3 Evaluation Strategy
+
+The initial implementation follows the original Amiga `WayToGo()` heuristic as closely as practical.
+
+The evaluation focuses on the remaining distance to each player's next objective, adjusted for route progress.
+
+The two rulesets use different distance metrics:
+
+- Current Rules uses Chebyshev distance.
+- Classic Rules uses BFS distance.
+
+The evaluator is selected through the ruleset configuration rather than hard-coded into minimax.
+
+The evaluation score is based on the difference between the opponent's remaining work and the current player's remaining work.
+
+A higher score is better for the player whose perspective is being evaluated.
+
+Terminal wins and losses receive dominant scores.
+
+The evaluator does not perform additional minimax lookahead. Search and evaluation remain separate responsibilities.
+
+### 14.4 Search Optimization
+
+Alpha-beta pruning reduces the number of positions that need to be evaluated without changing the result of a minimax search at a given depth.
+
+Search depth is configurable through the UI.
+
+The current implementation does not add mobility bonuses, directional diversity, escape-potential bonuses, corner or edge penalties, or other independent positional heuristics.
+
+Such additions should only be considered if supported by analysis of the original implementation or by demonstrable improvements in playing strength.
+
+### 14.5 Loop Detection and Handling
+
+Loop detection is a planned extension of the AI.
+
+The original Amiga implementation contains an example of how loops are detected and handled. That implementation should be examined before designing the corresponding mechanism in the POC.
+
+The investigation should establish:
+
+- What constitutes a loop in the original implementation.
+- Whether detection is based on repeated positions, repeated game states, or movement sequences.
+- Whether loop detection applies to the actual game history, the hypothetical search tree, or both.
+- How the original AI responds when a loop is detected.
+
+The eventual implementation should preserve the original game's intended behaviour as closely as practical.
+
+Loop detection must be considered separately from ordinary minimax search and should not be added until the original algorithm has been understood.
+
+### 14.6 Future Difficulty Levels
+
+The original game offers nine difficulty levels.
+
+The current POC exposes configurable search depth rather than reproducing all nine original difficulty levels.
+
+A future difficulty system may combine search depth with other parameters, but should remain independent of the evaluator and rules engine.
+
+## 15. Distance Calculation and Evaluation
+
+Distance calculation and position evaluation are separate responsibilities.
+
+The distance module provides geometric information. The evaluator uses that information to estimate progress towards objectives.
+
+This distinction is important because geometric distance does not necessarily represent the number of legal moves available in the actual game.
+
+For example:
+
+- BFS accounts for blocked fields.
+- BFS ignores arrow masks.
+- Neither distance metric simulates the opponent-dependent movement restrictions.
+- Legal movement remains the responsibility of `rules.js`.
+
+The distance calculation is therefore an approximation used by the evaluation heuristic, not a replacement for the rules engine.
+
+The architecture allows additional distance metrics or evaluators to be introduced without changing the minimax algorithm.
+
+## 16. Testing
+
+The test suite is run directly in the browser using `tests/test.html`.
+
+The current suites cover:
+
+- Movement rules.
+- Distance calculations.
+- Game state and operations.
+- UI behaviour.
+
+Tests are registered with the common test runner and executed independently.
+
+### 16.1 Movement Tests
+
+`rules.test.js` tests legal-move calculation, including movement restrictions, board boundaries, blocked fields, and the special rule that the opponent's tile determines the available movement directions.
+
+### 16.2 Distance Tests
+
+`distance.test.js` tests the behaviour of the distance algorithms independently of the AI.
+
+BFS tests cover:
+
+- Distance from a position to itself.
+- Horizontal movement.
+- Diagonal movement.
+- Detours around obstacles.
+- Unreachable destinations.
+- Diagonal movement between blocked fields.
+- Independence from directional arrow masks.
+- Blocked start and destination fields.
+
+These tests establish that BFS calculates geometric shortest-path distance while respecting blocked fields, without applying the actual movement rules.
+
+### 16.3 Game Tests
+
+`game.test.js` tests game-level operations, including new games, move validation, turn progression, route advancement, victory, blocked-player losses, and undo.
+
+### 16.4 UI Tests
+
+`ui.test.js` tests UI behaviour independently of the actual browser interaction where possible, using a test harness to provide the required controls and dependencies.
+
+### 16.5 AI Tests
+
+Dedicated AI tests should be added as the implementation develops.
+
+They should cover:
+
+- Correct terminal-position evaluation.
+- Objective-progress evaluation.
+- Selection of an immediately winning move.
+- Recognition of positions where the opponent has no legal moves.
+- Minimax decisions at different search depths.
+- Correct alpha-beta pruning behaviour.
+- Preservation of the live game state during search.
+- Correct handling of loop situations once loop detection is implemented.
+
+Tests should distinguish between the correctness of the search algorithm and the playing strength of the evaluation heuristic.
+
+A passing minimax test does not, by itself, establish that the AI plays well.
+
+## 17. Architectural Principles for Future Development
+
+The following principles should remain central as the project evolves:
+
+1. Game rules must remain independent of the presentation layer.
+2. The Game API remains the supported interface for modifying the live game.
+3. The AI must use the same movement rules as human players.
+4. Search must not mutate the live game state.
+5. Evaluation and search must remain separate responsibilities.
+6. Distance calculations must not silently become substitutes for legal-move calculations.
+7. Ruleset-specific behaviour should be configured through rulesets wherever practical.
+8. New heuristics should be justified by analysis or measurable improvements rather than added speculatively.
+9. The original Amiga implementation should be used as a reference when reproducing original AI behaviour.
+10. The architecture must remain independent of Canvas and browser presentation APIs.
+11. Loop detection and handling should be based on an examination of the original implementation before a new mechanism is designed.
+12. The Game Core should remain reusable by clients other than the browser POC.
