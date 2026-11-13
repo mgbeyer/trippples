@@ -23,6 +23,43 @@ const rulesetChoiceSelect =
 const rulesetConfirmDialog =
     document.getElementById("rulesetConfirmDialog");
 
+const computerPlayerSelect =
+    document.getElementById("computerPlayer");
+
+const searchDepthSelect =
+    document.getElementById("searchDepth");
+
+
+function handleGameChanged() {
+    const computerPlayer = computerPlayerSelect.value;
+
+    if (
+        computerPlayer === "none" ||
+        game.gameOver ||
+        game.getCurrentPlayer() !== computerPlayer
+    ) {
+        return;
+    }
+
+    const depth = Number.parseInt(
+        searchDepthSelect.value,
+        10
+    );
+
+    const result = findBestMove(game, { depth });
+
+    if (!result) {
+        return;
+    }
+
+    const from = game.getPlayerPosition(computerPlayer);
+
+    game.move(from, result.move);
+
+    ui.render();
+}
+
+
 const ui = new UI(
     canvas,
     boardArea,
@@ -35,9 +72,18 @@ const ui = new UI(
     startingPlayerSelect,
     boardChoiceSelect,
     legalMovesDisplaySelect,
-    rulesetChoiceSelect,
-    rulesetConfirmDialog
+    computerPlayerSelect,
+    searchDepthSelect,
+    handleGameChanged
 );
+
+computerPlayerSelect.addEventListener("change", () => {
+    ui.render();
+    handleGameChanged();
+});
+
+// If the computer is the starting player, let it make the first move.
+handleGameChanged();
 
 let activeRulesetId = game.ruleset.id;
 
@@ -71,4 +117,6 @@ rulesetConfirmDialog.addEventListener("close", () => {
 
     ui.drag = null;
     ui.render();
+
+    handleGameChanged();
 });

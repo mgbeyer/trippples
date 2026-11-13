@@ -24,6 +24,24 @@
 
         <section id="newGameSettings" aria-label="Spielsteuerung">
             <div class="setting">
+                <label for="computerPlayer">Computergegner</label>
+                <select id="computerPlayer">
+                    <option value="none" selected>Keiner (zwei Spieler)</option>
+                    <option value="orange">Spieler B – Orange</option>
+                    <option value="blue">Spieler A – Blau</option>
+                </select>
+            </div>
+
+            <div class="setting">
+                <label for="searchDepth">KI-Schwierigkeit</label>
+                <select id="searchDepth">
+                    <option value="2">Einfach (2)</option>
+                    <option value="4" selected>Normal (4)</option>
+                    <option value="5">Schwer (5)</option>
+                    <option value="6">Experte (6)</option>
+                </select>
+            </div>
+            <div class="setting">
                 <label for="rulesetChoice">Regelwerk</label>
                 <select id="rulesetChoice">
                     <option value="current" selected>Aktuelle Regeln</option>
@@ -126,7 +144,10 @@
     <script src="js/rulesets.js"></script>
     <script src="js/board.js"></script>
     <script src="js/rules.js"></script>
+    <script src="js/distance.js"></script>
     <script src="js/game.js"></script>
+    <script src="js/evaluator.js"></script>
+    <script src="js/ai.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/main.js"></script>
 

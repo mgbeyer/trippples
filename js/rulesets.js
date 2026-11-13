@@ -3,7 +3,10 @@ const RULESETS = {
     current: {
         id: "current",
         name: "Current Rules",
-
+        evaluator: {
+            type: "wayToGo",
+            distance: "chebyshev"
+        },
         board: {
             size: 8,
             arrowCombinationCount: 56,
@@ -39,7 +42,10 @@ const RULESETS = {
     classic: {
         id: "classic",
         name: "Classic Rules",
-
+        evaluator: {
+            type: "wayToGo",
+            distance: "bfs"
+        },
         board: {
             size: 8,
             arrowCombinationCount: 56,

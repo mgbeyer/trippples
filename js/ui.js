@@ -20,7 +20,10 @@ class UI {
         orangeMiniMap,
         startingPlayerSelect,
         boardChoiceSelect,
-        legalMovesDisplaySelect
+        legalMovesDisplaySelect,
+        computerPlayerSelect,
+        searchDepthSelect,
+        onGameChanged = () => {}
     ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
@@ -39,6 +42,9 @@ class UI {
         this.drag = null;
         this.boardLeft = 0;
         this.boardTop = 0;
+        this.computerPlayerSelect = computerPlayerSelect;
+        this.searchDepthSelect = searchDepthSelect;
+        this.onGameChanged = onGameChanged;
 
         canvas.addEventListener("pointerdown", e => this.down(e));
         canvas.addEventListener("pointermove", e => this.move(e));
@@ -60,12 +66,23 @@ class UI {
             });
 
             this.render();
+            this.onGameChanged();
         });
 
         this.undoButton.addEventListener("click", () => {
             this.drag = null;
 
             if (this.game.undo()) {
+                // In human-vs-computer mode, undo the pair of moves
+                // so the human gets another turn.
+                if (
+                    this.computerPlayerSelect.value !== "none" &&
+                    this.isComputerTurn() &&
+                    this.game.canUndo()
+                ) {
+                    this.game.undo();
+                }
+
                 this.render();
             }
         });
@@ -77,6 +94,14 @@ class UI {
         this.resize();
     }
 
+    isComputerTurn() {
+        return (
+            this.computerPlayerSelect.value !== "none" &&
+            this.game.getCurrentPlayer() ===
+                this.computerPlayerSelect.value
+        );
+    }
+    
     resize() {
         const r = this.boardArea.getBoundingClientRect();
         const d = devicePixelRatio || 1;
@@ -142,6 +167,11 @@ class UI {
             return;
         }
 
+        if (this.isComputerTurn()) {
+            this.canvas.style.cursor = "default";
+            return;
+        }
+        
         const p = this.point(e.clientX, e.clientY);
 
         if (!p) {
@@ -171,7 +201,7 @@ class UI {
     }
 
     down(e) {
-        if (this.game.gameOver) {
+        if (this.game.gameOver || this.isComputerTurn()) {
             return;
         }
 
@@ -222,7 +252,15 @@ class UI {
         const p = this.point(e.clientX, e.clientY);
 
         if (p) {
-            this.game.move(d.from, p);
+            const result = this.game.move(d.from, p);
+
+            this.render();
+
+            if (result.ok) {
+                this.onGameChanged();
+            }
+
+            return;
         }
 
         this.render();
@@ -255,7 +293,7 @@ class UI {
             this.height
         );
 
-const boardSize = board.length;
+        const boardSize = board.length;
 
         for (let y = 0; y < boardSize; y++) {
             for (let x = 0; x < boardSize; x++) {
@@ -408,7 +446,12 @@ const boardSize = board.length;
         this.updateStatus();
         this.renderMiniMaps();
 
-        this.undoButton.disabled = !this.game.canUndo();
+        const computerMode =
+            this.computerPlayerSelect.value !== "none";
+
+        this.undoButton.disabled =
+            !this.game.canUndo() ||
+            (computerMode && this.game.history.length < 2);
     }
 
     drawCurrentGoal() {
