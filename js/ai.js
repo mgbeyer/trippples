@@ -1,6 +1,11 @@
-
+// Default search depth: the AI looks ahead four individual moves (plies).
+// This provides a balance between playing strength and calculation time.
 const AI_DEFAULT_DEPTH = 4;
 
+
+// Creates an independent game state for the AI search.
+// Player objects are copied, while the board is shared because it is immutable.
+// This prevents simulated moves from modifying the actual game.
 function cloneSearchState(state) {
     return {
         board: state.board,
@@ -14,6 +19,11 @@ function cloneSearchState(state) {
     };
 }
 
+
+// Applies a move to a simulated game state and returns the resulting state.
+// It updates the player's position and route progress, checks for victory,
+// switches the active player, and checks whether that player can still move.
+// This allows Minimax to explore possible moves without changing the real game.
 function applySearchMove(state, move, ruleset) {
     const next = cloneSearchState(state);
     const player = state.currentPlayer;
@@ -52,6 +62,10 @@ function applySearchMove(state, move, ruleset) {
     return next;
 }
 
+
+// Creates a terminal state in which the current player has no legal moves.
+// The opponent is declared the winner.
+// This ensures that positions with no available moves are evaluated as losses.
 function getTerminalStateForNoMoves(state) {
     return {
         ...state,
@@ -60,6 +74,12 @@ function getTerminalStateForNoMoves(state) {
     };
 }
 
+
+// Recursively searches possible future moves using the Minimax algorithm.
+// The perspective player tries to maximize the score, while the opponent
+// tries to minimize it. Alpha-beta pruning skips branches that cannot
+// influence the final decision, reducing the number of positions examined.
+// The returned score estimates how favorable the resulting position is.
 function minimax(
     state,
     ruleset,
@@ -132,6 +152,7 @@ function minimax(
         return bestScore;
     }
 
+    // minimizing
     let bestScore = Infinity;
 
     for (const move of moves) {
@@ -161,6 +182,12 @@ function minimax(
     return bestScore;
 }
 
+
+// Determines the best move for the current player.
+// It evaluates every legal first move by running Minimax on the resulting
+// position, then selects the move with the highest score.
+// Alpha-beta pruning is shared across the root moves to reduce search work.
+// Returns the selected move and its score, or null if no move is possible.
 function findBestMove(game, {
     depth = AI_DEFAULT_DEPTH
 } = {}) {
