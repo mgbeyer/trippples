@@ -125,21 +125,3 @@ When reconstructing the rules, the sources will be considered in roughly this or
 
 Any unresolved differences between the original rules and `Tripppin` will be recorded explicitly in `GAME_RULES.md`.
 
----
-
-## Open Questions
-
-Before implementing the POC, the following points should be verified:
-
-* Exact initial board layout
-* Exact placement and number of neutral/blank squares
-* Exact starting and destination positions
-* Whether the board setup is fixed or randomized
-* Exact movement distance and restrictions
-* Treatment of occupied or blocked destination squares
-* What happens when a player has no legal move
-* Exact winning condition
-* Whether any optional rules or variants should be supported
-* Which rules were used by the historical Amiga/DOS implementations
-
-The POC should implement **one clearly defined rule set**, with any deviations from the original rules documented explicitly.

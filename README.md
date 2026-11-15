@@ -1,6 +1,6 @@
 # Trippples — An Abstract Strategy Game Revisited
 
-**Trippples** (deliberately spelled with three *p*s) is an abstract strategy board game designed by William T. Powers in the early 1970s. This project explores the game through a modern, browser-based implementation, beginning with a playable proof of concept.
+**Trippples** (deliberately spelled with three *p*s) is an abstract strategy board game designed by William T. Powers in the early 1970s. This project explores the game through a modern, browser-based implementation.
 
 The long-term goal is to bring this unusual game to modern platforms while preserving its original character and documenting the reasoning behind the implementation.
 
@@ -14,7 +14,7 @@ And then, as these things sometimes do, the project disappeared into the back of
 
 Fast-forward to very recently, when I came across a paper printout of my old Pascal source code while clearing out some long-forgotten stuff in the attic. Seeing it again brought the game back to life in my mind. Somehow, it suddenly seemed obvious: **this game deserves a new life on a modern platform — perhaps even on a mobile phone.**
 
-Rather than jumping straight into a full-blown application, I decided to start small and build a proof of concept first. The immediate goal is to get the rules right, establish a sound technical foundation, and make the game playable in a modern browser.
+Rather than jumping straight into a full-blown application, I decided to start small and build a proof of concept first. The immediate goal was to get the rules right, establish a sound technical foundation, and make the game playable in a modern browser.
 
 Partly, this is about bringing an old piece of personal computing history back to life. But it's also about revisiting something I created almost thirty years ago, understanding it again with today's tools, and seeing where the idea can go from here.
 
@@ -32,7 +32,7 @@ The precise setup and some gameplay details differ between surviving description
 
 ## Current Implementation
 
-The project currently consists of a browser-based proof of concept built with HTML, JavaScript, and Canvas.
+The project currently consists of a browser-based implementation built with HTML, JavaScript, and Canvas.
 
 The implementation is deliberately modular:
 
@@ -40,10 +40,13 @@ The implementation is deliberately modular:
 - **`rules.js`** — movement rules and legal-move calculations.
 - **`rulesets.js`** — definitions of the available rulesets.
 - **`game.js`** — game state, turn management, and game logic.
+- **`distance.js`** — geometric distance calculations, including Chebyshev distance and breadth-first search (BFS).
+- **`evaluator.js`** — position evaluation and the AI evaluator registry.
+- **`ai.js`** — computer opponent using minimax search with alpha-beta pruning.
 - **`ui.js`** — board rendering and user interaction.
 - **`main.js`** — application initialization and coordination.
 
-The underlying principle is to keep game rules, game state, and presentation separate, making the logic easier to test and the implementation easier to extend.
+The underlying principle is to keep game rules, game state, AI logic, and presentation separate, making the logic easier to test and the implementation easier to extend.
 
 ![Trippples game board](screenshots/scr01.jpg)
 ![Trippples game board](screenshots/scr02.jpg)
@@ -52,6 +55,9 @@ The underlying principle is to keep game rules, game state, and presentation sep
 
 - An interactive 8×8 game board.
 - Local human-versus-human gameplay.
+- Human-versus-computer gameplay.
+- A computer opponent based on minimax search with alpha-beta pruning.
+- Configurable AI search depth, measured in individual moves (plies).
 - Two selectable rulesets: **Current Rules** and **Classic Rules**.
 - Ruleset switching with confirmation before the current game is discarded.
 - Drag-and-drop movement.
@@ -59,9 +65,16 @@ The underlying principle is to keep game rules, game state, and presentation sep
 - Distinct visual representations for blocked fields and route objectives.
 - Two compact player maps showing route progress and the next objective.
 - A responsive layout designed to accommodate different screen sizes and arrangements.
-- A lightweight browser-based test runner covering rules, game logic, and UI behaviour.
+- A lightweight browser-based test runner covering rules, distance calculations, game logic, and UI behaviour.
 
 The two rulesets provide different board configurations and starting positions while sharing the same underlying movement and game infrastructure. This makes it possible to explore different interpretations without duplicating the core implementation.
+
+The computer opponent uses a position evaluator inspired by Paul Kienitz's original Amiga implementation. Its distance calculations are selected by the active ruleset:
+
+- **Current Rules:** Chebyshev distance, measuring the minimum number of moves on an unobstructed grid.
+- **Classic Rules:** Breadth-first search (BFS), taking blocked fields into account.
+
+The distinction between legal movement and geometric distance is intentional. Actual moves must respect the directional restrictions imposed by the opponent's tile. The AI's distance calculation, on the other hand, estimates progress towards an objective without treating those directional restrictions as permanent obstacles.
 
 The test runner helps verify the underlying logic independently of manually playing through the interface.
 
@@ -75,16 +88,16 @@ The project currently offers two explicitly defined configurations rather than s
 
 See the accompanying documentation:
 
-- **[Sources & Reference Material](SOURCES.md)** — historical sources, implementations, and their relative reliability.
-- **[Game Rules](GAME_RULES.md)** — the implemented rulesets, gameplay mechanics, implementation decisions, and unresolved discrepancies.
-- **[Architecture](ARCHITECTURE.md)** — the code structure, responsibilities of individual modules, and design decisions.
+- **[Sources & Reference Material](docs/SYNOPSIS-AND-SOURCES.md)** — historical sources, implementations, and their relative reliability.
+- **[Game Rules](docs/GAME_RULES.md)** — the implemented rulesets, gameplay mechanics, implementation decisions, and unresolved discrepancies.
+- **[Architecture](docs/ARCHITECTURE.md)** — the code structure, responsibilities of individual modules, and design decisions.
 
 ## Architecture and Design Principles
 
-The proof of concept is being developed with a few straightforward principles in mind:
+The project is being developed with a few straightforward principles in mind:
 
-- **Separation of concerns:** rules and game state should not depend on rendering or UI details.
-- **Testable logic:** legal moves, turn transitions, and winning conditions should be verifiable without interacting with the board manually.
+- **Separation of concerns:** rules and game state should not depend on rendering or UI details. AI evaluation and search should likewise remain independent of presentation.
+- **Testable logic:** legal moves, turn transitions, winning conditions, distance calculations, and other core mechanics should be verifiable without interacting with the board manually.
 - **Explicit decisions:** uncertain rules and deviations from historical sources should be documented.
 - **Flexible presentation:** the board and supporting controls should adapt to different layouts instead of relying on fixed positioning.
 - **Reusable rulesets:** alternative board configurations should use the same underlying game engine wherever possible.
@@ -94,17 +107,18 @@ These principles are intended to keep the project understandable and maintainabl
 
 ## Future Direction
 
-The current browser version is a foundation, not the final product.
+The current browser version is a foundation, not necessarily the final product.
 
 The longer-term plan is to explore an Android version with online, turn-based multiplayer. A possible architecture would combine a REST API for conventional requests with WebSockets for real-time communication and turn updates.
 
 Other areas for future investigation include:
 
-- A computer opponent based on minimax search with alpha-beta pruning.
+- Improving and refining the computer opponent.
 - Server-side move validation for online games.
 - Adapting the game and its interface to mobile devices.
+- Exploring the practical requirements of online, turn-based multiplayer.
 
-These are planned directions, not features of the current proof of concept. The immediate priority remains a sound, well-tested implementation of the game itself.
+These are planned directions, not features of the current implementation. The immediate priority remains a sound, well-tested implementation of the game itself.
 
 ## Historical References
 
