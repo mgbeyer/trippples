@@ -10,6 +10,8 @@ This project has a personal history that goes back almost three decades.
 
 Back in 1997, I discovered Paul Kienitz's Amiga implementation of Trippples in C on an old Amiga Public Domain disk, most likely from the Fred Fish collection. I liked the game enough to write my own DOS conversion in Turbo Pascal.
 
+╰┈➤ [DOSTRIP - Pascal port of the original Amiga C implementation](https://github.com/mgbeyer/dostrip)
+
 And then, as these things sometimes do, the project disappeared into the back of my mind.
 
 Fast-forward to very recently, when I came across a paper printout of my old Pascal source code while clearing out some long-forgotten stuff in the attic. Seeing it again brought the game back to life in my mind. Somehow, it suddenly seemed obvious: **this game deserves a new life on a modern platform — perhaps even on a mobile phone.**
